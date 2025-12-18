@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-modal RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .upload-zone {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-zone:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .upload-zone.dragging {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .response {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .sources {
+            margin-top: 15px;
+        }
+
+        .source-item {
+            background: white;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 3px solid #764ba2;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-box .label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Multi-modal RAG System</h1>
+            <p>Upload documents, images, and audio - Query with natural language</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Upload Section -->
+            <div class="card">
+                <h2>📁 Upload Files</h2>
+                <div class="upload-zone" id="uploadZone">
+                    <p style="font-size: 3rem; margin-bottom: 10px;">📤</p>
+                    <p><strong>Drag & drop files here</strong></p>
+                    <p style="color: #666; margin-top: 10px;">or click to browse</p>
+                    <p style="color: #999; font-size: 0.9rem; margin-top: 10px;">
+                        Supports: PDF, DOCX, Images (PNG, JPG), Audio (MP3, WAV)
+                    </p>
+                </div>
+                <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.bmp,.mp3,.wav,.m4a,.ogg" multiple>
+                <div id="uploadStatus"></div>
+                
+                <div style="margin-top: 20px;">
+                    <h3 style="color: #667eea; margin-bottom: 10px;">System Stats</h3>
+                    <div class="stats" id="stats">
+                        <div class="stat-box">
+                            <div class="number" id="docCount">0</div>
+                            <div class="label">Documents</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number" id="filesCount">0</div>
+                            <div class="label">Files Processed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number" id="queryCount">0</div>
+                            <div class="label">Queries</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Query Section -->
+            <div class="card">
+                <h2>💬 Ask Questions</h2>
+                <textarea id="queryInput" placeholder="Ask a question about your uploaded documents..."></textarea>
+                <button class="btn" id="queryBtn">Search</button>
+                <div id="queryStatus"></div>
+                <div id="response"></div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="card">
+            <h2>📜 Recent Queries</h2>
+            <div id="history"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        // Upload functionality
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+        
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragging');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragging');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragging');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        async function handleFiles(files) {
+            for (let file of files) {
+                await uploadFile(file);
+            }
+            loadStats();
+        }
+        
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            uploadStatus.innerHTML = `<div class="status info">Uploading ${file.name}... <span class="loading"></span></div>`;
+            
+            try {
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    uploadStatus.innerHTML = `<div class="status success">✅ ${file.name} uploaded successfully! (${result.chunks_created} chunks)</div>`;
+                } else {
+                    uploadStatus.innerHTML = `<div class="status error">❌ Error: ${result.detail}</div>`;
+                }
+            } catch (error) {
+                uploadStatus.innerHTML = `<div class="status error">❌ Error uploading file: ${error.message}</div>`;
+            }
+        }
+        
+        // Query functionality
+        const queryInput = document.getElementById('queryInput');
+        const queryBtn = document.getElementById('queryBtn');
+        const queryStatus = document.getElementById('queryStatus');
+        const responseDiv = document.getElementById('response');
+        
+        queryBtn.addEventListener('click', handleQuery);
+        queryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                handleQuery();
+            }
+        });
+        
+        async function handleQuery() {
+            const question = queryInput.value.trim();
+            if (!question) return;
+            
+            queryBtn.disabled = true;
+            queryStatus.innerHTML = `<div class="status info">Searching... <span class="loading"></span></div>`;
+            responseDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, top_k: 5 })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    queryStatus.innerHTML = `<div class="status success">✅ Response generated in ${result.processing_time.toFixed(2)}s</div>`;
+                    
+                    let html = `
+                        <div class="response">
+                            <strong>Answer:</strong><br>${result.answer}
+                        </div>
+                    `;
+                    
+                    if (result.sources && result.sources.length > 0) {
+                        html += '<div class="sources"><strong>Sources:</strong>';
+                        result.sources.forEach((source, i) => {
+                            html += `
+                                <div class="source-item">
+                                    <strong>${i + 1}. ${source.file}</strong> (${source.type}) - Similarity: ${(source.similarity * 100).toFixed(1)}%<br>
+                                    <span style="color: #666; font-size: 0.9rem;">${source.excerpt}</span>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    responseDiv.innerHTML = html;
+                    loadHistory();
+                    loadStats();
+                } else {
+                    queryStatus.innerHTML = `<div class="status error">❌ Error: ${result.detail}</div>`;
+                }
+            } catch (error) {
+                queryStatus.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            } finally {
+                queryBtn.disabled = false;
+            }
+        }
+        
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const data = await response.json();
+                
+                document.getElementById('docCount').textContent = data.vector_store.total_documents;
+                document.getElementById('filesCount').textContent = data.processed_files;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Load history
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_URL}/history?limit=5`);
+                const data = await response.json();
+                
+                const historyDiv = document.getElementById('history');
+                
+                if (data.history.length === 0) {
+                    historyDiv.innerHTML = '<p style="color: #666;">No queries yet. Start by asking a question!</p>';
+                    document.getElementById('queryCount').textContent = '0';
+                    return;
+                }
+                
+                document.getElementById('queryCount').textContent = data.history.length;
+                
+                let html = '';
+                data.history.slice().reverse().forEach((item, i) => {
+                    html += `
+                        <div class="response" style="margin-bottom: 15px;">
+                            <strong>Q:</strong> ${item.query}<br>
+                            <strong>A:</strong> ${item.response.substring(0, 150)}${item.response.length > 150 ? '...' : ''}<br>
+                            <small style="color: #666;">
+                                ${new Date(item.timestamp).toLocaleString()} | 
+                                ${item.retrieved_documents} sources | 
+                                ${item.processing_time_seconds.toFixed(2)}s
+                            </small>
+                        </div>
+                    `;
+                });
+                
+                historyDiv.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+        
+        // Initial load
+        loadStats();
+        loadHistory();
+        setInterval(loadStats, 30000); // Refresh stats every 30 seconds
+    </script>
+</body>
+</html>
