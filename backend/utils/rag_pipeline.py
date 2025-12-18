@@ -22,16 +22,23 @@ class RAGPipeline:
         
         # Load lightweight model using transformers
         if TRANSFORMERS_AVAILABLE:
-            print("Loading Qwen2.5-0.5B model (lightweight, fast)...")
+            print("Loading Qwen2.5-1.5B model (best accuracy-speed balance)...")
             try:
-                # Qwen2.5-0.5B - Only 0.5B parameters! Super fast and accurate
-                model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+                # Qwen2.5-1.5B - Best balance of accuracy and speed for CPU
+                # Alternative models:
+                # "Qwen/Qwen2.5-0.5B-Instruct" - Fastest but less accurate
+                # "microsoft/Phi-3-mini-4k-instruct" - More accurate but slower
+                # "TinyLlama/TinyLlama-1.1B-Chat-v1.0" - Fast but less accurate
+                model_name = "Qwen/Qwen2.5-1.5B-Instruct"
+                
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
                 self.llm = AutoModelForCausalLM.from_pretrained(
                     model_name,
-                    torch_dtype=torch.float32
-                ).to("cpu")
-                print("✅ Qwen2.5-0.5B loaded successfully! (Super fast & lightweight)")
+                    torch_dtype=torch.float32,
+                    device_map="cpu",
+                    low_cpu_mem_usage=True
+                )
+                print("✅ Qwen2.5-1.5B loaded successfully! (Excellent accuracy + good speed)")
             except Exception as e:
                 print(f"Warning: Could not load model: {e}")
                 print("Using mock responses.")
@@ -80,23 +87,24 @@ class RAGPipeline:
     def _build_context(self, retrieved_docs: List[Dict[str, Any]]) -> str:
         """Build context from retrieved documents"""
         context_parts = []
-        for i, doc in enumerate(retrieved_docs, 1):
+        # Use top 4 most relevant documents for better accuracy
+        for i, doc in enumerate(retrieved_docs[:4], 1):
             file_path = doc["metadata"].get("file_path", "unknown")
             doc_type = doc["metadata"].get("type", "unknown")
-            content = doc["document"][:500]  # Limit context length
+            content = doc["document"][:600]  # Slightly more context for accuracy
             
-            context_parts.append(f"[Source {i} - {doc_type} from {file_path}]\n{content}\n")
+            context_parts.append(f"[Document {i} from {file_path}]\n{content}\n")
         
         return "\n".join(context_parts)
     
     def _generate_answer(self, question: str, context: str) -> str:
         """Generate answer using LLM"""
-        prompt = f"""Based on the following context, answer the question. If the context doesn't contain enough information, say so.
-
-Context:
-{context}
+        # Optimized prompt for better accuracy
+        prompt = f"""Context: {context}
 
 Question: {question}
+
+Provide a clear and accurate answer based only on the context above. If the context doesn't contain the information, say "I don't have enough information to answer this question."
 
 Answer:"""
         
@@ -105,16 +113,17 @@ Answer:"""
             return f"[Mock Response] Based on the provided context, here's a summary related to your question. Install transformers to get real AI responses: pip install transformers torch"
         
         try:
-            # Tokenize input
-            inputs = self.tokenizer(prompt, return_tensors="pt")
+            # Tokenize input with truncation for speed
+            inputs = self.tokenizer(prompt, return_tensors="pt", max_length=2048, truncation=True)
             
-            # Generate response
+            # Generate response with optimized parameters for accuracy + speed
             outputs = self.llm.generate(
                 **inputs,
-                max_new_tokens=self.max_tokens,
-                temperature=self.temperature,
+                max_new_tokens=min(self.max_tokens, 200),  # Limit for speed
+                temperature=0.7,
                 do_sample=True,
-                top_p=0.95,
+                top_p=0.9,
+                repetition_penalty=1.1,
                 pad_token_id=self.tokenizer.eos_token_id
             )
             
