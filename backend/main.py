@@ -97,7 +97,7 @@ async def upload_file(file: UploadFile = File(...)):
             "filename": file.filename,
             "type": result["type"],
             "chunks_created": len(chunks),
-            "message": f"File processed and added to knowledge base"
+            "message": f"✅ Successfully processed {file.filename} ({len(chunks)} chunks)"
         }
     
     except Exception as e:
@@ -126,12 +126,12 @@ async def get_stats():
     """Get system statistics"""
     try:
         vector_stats = vector_store.get_stats()
-        agent_logs = orchestrator.get_all_logs()
+        query_history = logger.get_history(limit=10000)
         
         return {
-            "vector_store": vector_stats,
-            "processed_files": len(orchestrator.processed_files),
-            "total_logs": len(agent_logs)
+            "total_documents": vector_stats.get("total_documents", 0),
+            "total_queries": len(query_history),
+            "index_size": vector_stats.get("index_size", 0)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -16,8 +16,8 @@ class QueryLogger:
         """Log a query and its response"""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
-            "query": query,
-            "response": response,
+            "question": query,  # Frontend expects 'question'
+            "answer": response,  # Frontend expects 'answer'
             "retrieved_documents": len(retrieved_docs),
             "processing_time_seconds": processing_time,
             "sources": [
