@@ -2,6 +2,46 @@
   margin-top: 2rem;
 }
 
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: #edf2f7;
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.tabs button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #718096;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.tabs button:hover {
+  background: #cbd5e0;
+  color: #2d3748;
+}
+
+.tabs button.active {
+  background: #4299e1;
+  color: white;
+  box-shadow: none;
+}
+
 .empty-state {
   color: #999;
   text-align: center;
@@ -16,16 +56,11 @@
 }
 
 .history-item {
-  background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+  background: white;
   padding: 1.5rem;
-  border-radius: 12px;
-  border-left: 4px solid #667eea;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.history-item:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #4299e1;
 }
 
 .history-question {
@@ -36,20 +71,49 @@
 }
 
 .history-question strong {
-  color: #667eea;
+  color: #4299e1;
   margin-right: 0.5rem;
 }
 
 .history-answer {
   color: #666;
   font-size: 0.95rem;
-  line-height: 1.5;
+  line-height: 1.6;
   margin-bottom: 1rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .history-answer strong {
-  color: #764ba2;
+  color: #48bb78;
   margin-right: 0.5rem;
+}
+
+.full-answer {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.toggle-btn {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  transition: background 0.2s;
+}
+
+.toggle-btn:hover {
+  background: #3182ce;
 }
 
 .history-meta {

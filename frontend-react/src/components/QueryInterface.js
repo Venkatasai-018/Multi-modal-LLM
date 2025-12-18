@@ -58,7 +58,7 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
         <div className="response-container">
           <div className="answer">
             <h3>Answer</h3>
-            <p>{response.answer}</p>
+            <div className="answer-text">{response.answer}</div>
             <div className="meta">
               <span>⏱️ {response.processing_time?.toFixed(2)}s</span>
             </div>

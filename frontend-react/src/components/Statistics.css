@@ -7,18 +7,13 @@
 
 .stat-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .stat-icon {
@@ -32,17 +27,17 @@
 }
 
 .stat-icon.documents {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #4299e1;
   color: white;
 }
 
 .stat-icon.files {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: #48bb78;
   color: white;
 }
 
 .stat-icon.queries {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: #ed8936;
   color: white;
 }
 
@@ -52,13 +47,13 @@
 
 .stat-number {
   font-size: 2rem;
-  font-weight: 700;
-  color: #333;
+  font-weight: 600;
+  color: #1a202c;
   line-height: 1;
 }
 
 .stat-label {
-  color: #666;
-  font-size: 0.9rem;
+  color: #718096;
+  font-size: 0.875rem;
   margin-top: 0.25rem;
 }

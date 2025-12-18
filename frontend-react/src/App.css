@@ -5,9 +5,8 @@
 }
 
 .header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
   padding: 1.5rem 2rem;
 }
 
@@ -20,18 +19,20 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  color: #667eea;
+  color: #2d3748;
 }
 
 .logo h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 600;
   margin-bottom: 0.25rem;
+  color: #1a202c;
 }
 
 .logo p {
-  font-size: 0.9rem;
-  color: #666;
+  font-size: 0.875rem;
+  color: #718096;
+  font-weight: 400;
 }
 
 .main-content {
@@ -49,11 +50,12 @@
   margin: 2rem 0;
 }
 
-.footer {
-  background: rgba(255, 255, 255, 0.95);
+.footer {white;
+  border-top: 1px solid #e2e8f0;
   padding: 1.5rem;
   text-align: center;
-  color: #666;
+  color: #718096;
+  font-size: 0.875
   font-size: 0.9rem;
 }
 
