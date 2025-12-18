@@ -1,5 +1,6 @@
 try:
-    from transformers import pipeline
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    import torch
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
@@ -17,26 +18,27 @@ class RAGPipeline:
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.llm = None
+        self.tokenizer = None
         
-        # Try to load LLM using transformers (easier on Windows)
+        # Load lightweight model using transformers
         if TRANSFORMERS_AVAILABLE:
-            print("Loading Qwen2.5-1.5B model (this may take a moment)...")
+            print("Loading Qwen2.5-0.5B model (lightweight, fast)...")
             try:
-                # Using Qwen2.5-1.5B-Instruct - excellent small model
-                # Downloads automatically, ~1.7GB
-                self.llm = pipeline(
-                    "text-generation",
-                    model="Qwen/Qwen2.5-1.5B-Instruct",
-                    device_map="cpu",  # Use CPU only for compatibility
-                    max_length=2048
+                # Qwen2.5-0.5B - Only 0.5B parameters! Super fast and accurate
+                model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.llm = AutoModelForCausalLM.from_pretrained(
+                    model_name,
+                    torch_dtype=torch.float32,
+                    device_map="cpu"
                 )
-                print("Qwen2.5 model loaded successfully!")
+                print("✅ Qwen2.5-0.5B loaded successfully! (Super fast & lightweight)")
             except Exception as e:
-                print(f"Warning: Could not load LLM: {e}")
-                print("Using mock responses. Install transformers to enable AI responses.")
+                print(f"Warning: Could not load model: {e}")
+                print("Using mock responses.")
         else:
-            print("Warning: transformers not installed. Using mock responses.")
-            print("Install with: pip install transformers accelerate")
+            print("Warning: transformers not installed.")
+            print("Install with: pip install transformers torch")
     
     def query(self, question: str, top_k: int = 5) -> Dict[str, Any]:
         """Process a query using RAG"""
@@ -99,27 +101,29 @@ Question: {question}
 
 Answer:"""
         
-        if self.llm is None:
+        if self.llm is None or self.tokenizer is None:
             # Mock response when model is not available
-            return f"[Mock Response] Based on the provided context, here's a summary related to your question. Install transformers library to get real AI-generated responses: pip install transformers accelerate"
+            return f"[Mock Response] Based on the provided context, here's a summary related to your question. Install transformers to get real AI responses: pip install transformers torch"
         
         try:
-            # Generate response using transformers
-            response = self.llm(
-                prompt,
+            # Tokenize input
+            inputs = self.tokenizer(prompt, return_tensors="pt")
+            
+            # Generate response
+            outputs = self.llm.generate(
+                **inputs,
                 max_new_tokens=self.max_tokens,
                 temperature=self.temperature,
                 do_sample=True,
-                top_p=0.95
+                top_p=0.95,
+                pad_token_id=self.tokenizer.eos_token_id
             )
             
-            # Extract generated text
-            generated_text = response[0]["generated_text"]
-            
-            # Remove the prompt from the response
+            # Decode and extract answer
+            generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
             answer = generated_text.replace(prompt, "").strip()
             
-            return answer
+            return answer if answer else "I cannot provide an answer based on the given context."
         except Exception as e:
             return f"Error generating response: {str(e)}"
     
