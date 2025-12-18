@@ -20,16 +20,17 @@ class RAGPipeline:
         
         # Try to load LLM using transformers (easier on Windows)
         if TRANSFORMERS_AVAILABLE:
-            print("Loading LLM using Transformers (this may take a moment)...")
+            print("Loading Qwen2.5-1.5B model (this may take a moment)...")
             try:
-                # Using a small, fast model that works well for Q&A
+                # Using Qwen2.5-1.5B-Instruct - excellent small model
+                # Downloads automatically, ~1.7GB
                 self.llm = pipeline(
                     "text-generation",
-                    model="microsoft/phi-2",  # 2.7B model, good balance
-                    device_map="auto",
-                    trust_remote_code=True
+                    model="Qwen/Qwen2.5-1.5B-Instruct",
+                    device_map="cpu",  # Use CPU only for compatibility
+                    max_length=2048
                 )
-                print("LLM loaded successfully!")
+                print("Qwen2.5 model loaded successfully!")
             except Exception as e:
                 print(f"Warning: Could not load LLM: {e}")
                 print("Using mock responses. Install transformers to enable AI responses.")
