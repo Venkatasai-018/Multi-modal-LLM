@@ -1,0 +1,171 @@
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          USER INTERFACE (Browser)                        │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                     React Frontend (Port 3000)                    │  │
+│  │                                                                    │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │  │
+│  │  │ FileUpload   │  │    Query     │  │  Statistics & History  │ │  │
+│  │  │ Component    │  │  Interface   │  │      Components        │ │  │
+│  │  │              │  │              │  │                        │ │  │
+│  │  │ - Drag/Drop  │  │ - Text Input │  │  - Real-time Stats    │ │  │
+│  │  │ - Multi-file │  │ - Response   │  │  - Query History      │ │  │
+│  │  └──────────────┘  └──────────────┘  └────────────────────────┘ │  │
+│  └────────────────────────────┬─────────────────────────────────────┘  │
+└───────────────────────────────┼────────────────────────────────────────┘
+                                │
+                                │ HTTP/REST API (Axios)
+                                │
+┌───────────────────────────────▼────────────────────────────────────────┐
+│                    FastAPI Backend (Port 8000)                          │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                        API Endpoints                              │  │
+│  │                                                                    │  │
+│  │  POST /upload  │  POST /query  │  GET /history  │  GET /stats    │  │
+│  └───────┬────────────────┬───────────────┬───────────────┬──────────┘  │
+│          │                │               │               │             │
+│  ┌───────▼────────────────▼───────────────▼───────────────▼──────────┐  │
+│  │                      Main Application Logic                       │  │
+│  │                                                                    │  │
+│  │  ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐   │  │
+│  │  │   Config     │    │    Logger    │    │   File Handler   │   │  │
+│  │  │  Management  │    │   (JSONL)    │    │  (Save/Manage)   │   │  │
+│  │  └──────────────┘    └──────────────┘    └──────────────────┘   │  │
+│  └────────────────────────────┬──────────────────────────────────────┘  │
+└───────────────────────────────┼────────────────────────────────────────┘
+                                │
+        ┌───────────────────────┼───────────────────────┐
+        │                       │                       │
+┌───────▼─────────┐    ┌────────▼────────┐    ┌────────▼────────┐
+│   UPLOAD PATH   │    │   QUERY PATH    │    │  RETRIEVAL PATH │
+└───────┬─────────┘    └────────┬────────┘    └────────┬────────┘
+        │                       │                       │
+┌───────▼──────────────────────────────────────────────────────────────┐
+│                       Agent Orchestrator                              │
+│                   (Routes by file extension)                          │
+│                                                                       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │
+│  │   PDF    │  │  DOCX    │  │  Image   │  │     Audio        │   │
+│  │  Agent   │  │  Agent   │  │  Agent   │  │     Agent        │   │
+│  │          │  │          │  │          │  │                  │   │
+│  │ PyPDF2   │  │ python-  │  │Tesseract │  │  Whisper AI     │   │
+│  │          │  │  docx    │  │   OCR    │  │  (OpenAI)       │   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────────┬─────────┘   │
+│       │             │             │                  │             │
+│       └─────────────┴─────────────┴──────────────────┘             │
+│                              │                                      │
+│                      Extracted Text                                 │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                ┌──────────────▼──────────────┐
+                │    Text Preprocessing       │
+                │  - Chunking (500 chars)     │
+                │  - Metadata tagging         │
+                └──────────────┬──────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────────────┐
+│                      Vector Store (FAISS)                            │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │            Sentence Transformer Embeddings                   │   │
+│  │          (all-MiniLM-L6-v2, 384 dimensions)                 │   │
+│  └───────────────────────────┬─────────────────────────────────┘   │
+│                              │                                      │
+│  ┌───────────────────────────▼─────────────────────────────────┐   │
+│  │              FAISS Index (IndexFlatL2)                       │   │
+│  │                                                               │   │
+│  │  Document ID  │  Vector Embedding  │  Metadata (file, type) │   │
+│  │  ────────────────────────────────────────────────────────── │   │
+│  │      1        │  [0.23, -0.45, ...]│  {file: doc.pdf, ...}  │   │
+│  │      2        │  [0.11, 0.89, ...] │  {file: img.jpg, ...}  │   │
+│  │     ...       │       ...          │        ...             │   │
+│  └───────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│  Operations: add_documents(), search(query, top_k=4)                │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               │ Similarity Search (Top 4 results)
+                               │
+┌──────────────────────────────▼───────────────────────────────────────┐
+│                         RAG Pipeline                                  │
+│                                                                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  Step 1: Query Embedding                                      │   │
+│  │  - Convert user question to 384-dim vector                    │   │
+│  └───────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│  ┌───────────────────────────▼──────────────────────────────────┐   │
+│  │  Step 2: Context Retrieval                                    │   │
+│  │  - Retrieve top 4 similar documents                           │   │
+│  │  - Extract 600 chars from each                                │   │
+│  └───────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│  ┌───────────────────────────▼──────────────────────────────────┐   │
+│  │  Step 3: Prompt Construction                                  │   │
+│  │  - Build context from retrieved docs                          │   │
+│  │  - Format: "Context: ... Question: ... Answer:"               │   │
+│  └───────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│  ┌───────────────────────────▼──────────────────────────────────┐   │
+│  │  Step 4: LLM Generation                                       │   │
+│  │                                                                │   │
+│  │    ┌────────────────────────────────────────────────────┐    │   │
+│  │    │      Qwen2.5-1.5B-Instruct Model                   │    │   │
+│  │    │                                                     │    │   │
+│  │    │  - 1.5 Billion parameters                          │    │   │
+│  │    │  - Transformer architecture                        │    │   │
+│  │    │  - CPU inference (torch.float32)                   │    │   │
+│  │    │  - Max tokens: 200                                 │    │   │
+│  │    │  - Temperature: 0.7                                │    │   │
+│  │    │  - Top-p: 0.9                                      │    │   │
+│  │    └──────────────────┬─────────────────────────────────┘    │   │
+│  │                       │                                       │   │
+│  │                  Generated Answer                             │   │
+│  └───────────────────────┬───────────────────────────────────────┘   │
+└────────────────────────────┼─────────────────────────────────────────┘
+                             │
+                  ┌──────────▼──────────┐
+                  │   Response Builder  │
+                  │                     │
+                  │  - Answer text      │
+                  │  - Source files     │
+                  │  - Processing time  │
+                  └──────────┬──────────┘
+                             │
+                  ┌──────────▼──────────┐
+                  │    Logger (JSONL)   │
+                  │  - Save query       │
+                  │  - Save answer      │
+                  │  - Save timestamp   │
+                  └─────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════
+
+                          DATA FLOW EXAMPLE
+
+User uploads "report.pdf" →
+  ├─ PDF Agent extracts text
+  ├─ Text chunked into 500-char pieces
+  ├─ Each chunk → Sentence Transformer → 384-dim vector
+  └─ Vectors stored in FAISS with metadata
+
+User asks "What is the revenue?" →
+  ├─ Question → Sentence Transformer → vector
+  ├─ FAISS searches similar vectors → Top 4 chunks
+  ├─ Chunks + Question → Qwen2.5-1.5B LLM
+  ├─ LLM generates: "The revenue is $2.5M in Q3"
+  └─ Response returned with source files
+
+═══════════════════════════════════════════════════════════════════════
+
+                         TECHNOLOGY STACK
+
+Frontend:     React 18, Axios, React-Dropzone, React-Icons
+Backend:      Python 3.10+, FastAPI, Uvicorn
+Agents:       PyPDF2, python-docx, Tesseract, Whisper
+Embeddings:   sentence-transformers (all-MiniLM-L6-v2)
+Vector DB:    FAISS (IndexFlatL2)
+LLM:          Qwen2.5-1.5B-Instruct (Hugging Face Transformers)
+Storage:      Local filesystem, JSONL logs
