@@ -29,9 +29,8 @@ class RAGPipeline:
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
                 self.llm = AutoModelForCausalLM.from_pretrained(
                     model_name,
-                    torch_dtype=torch.float32,
-                    device_map="cpu"
-                )
+                    torch_dtype=torch.float32
+                ).to("cpu")
                 print("✅ Qwen2.5-0.5B loaded successfully! (Super fast & lightweight)")
             except Exception as e:
                 print(f"Warning: Could not load model: {e}")
