@@ -1,5 +1,9 @@
 from PIL import Image
-import pytesseract
+try:
+    import pytesseract
+    TESSERACT_AVAILABLE = True
+except:
+    TESSERACT_AVAILABLE = False
 from typing import Dict, Any
 from .base_agent import BaseAgent
 
@@ -17,7 +21,10 @@ class ImageAgent(BaseAgent):
             image = Image.open(file_path)
             
             # Extract text using Tesseract OCR
-            text = pytesseract.image_to_string(image)
+            if TESSERACT_AVAILABLE:
+                text = pytesseract.image_to_string(image)
+            else:
+                text = "[Tesseract OCR not installed - Please install to extract text from images]"
             
             self.log(f"Extracted text from image")
             

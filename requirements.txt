@@ -24,10 +24,10 @@ torchvision==0.16.1
 # Vector Database
 faiss-cpu==1.7.4
 
-# LLM
-llama-cpp-python==0.2.20
+# LLM - Using Transformers (easier to install than llama-cpp-python)
+# llama-cpp-python==0.2.20  # Hard to install on Windows
 
 # Utilities
-numpy==1.24.3
+numpy==1.26.4
 pandas==2.1.3
 aiofiles==23.2.1

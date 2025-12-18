@@ -1,4 +1,9 @@
-from llama_cpp import Llama
+try:
+    from transformers import pipeline
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+    
 from typing import List, Dict, Any
 import os
 
@@ -11,20 +16,26 @@ class RAGPipeline:
         self.logger = logger
         self.max_tokens = max_tokens
         self.temperature = temperature
+        self.llm = None
         
-        # Load LLM
-        if os.path.exists(model_path):
-            print(f"Loading LLM from {model_path}...")
-            self.llm = Llama(
-                model_path=model_path,
-                n_ctx=2048,
-                n_threads=4,
-                n_gpu_layers=0  # Set to > 0 if you have GPU support
-            )
-            print("LLM loaded successfully")
+        # Try to load LLM using transformers (easier on Windows)
+        if TRANSFORMERS_AVAILABLE:
+            print("Loading LLM using Transformers (this may take a moment)...")
+            try:
+                # Using a small, fast model that works well for Q&A
+                self.llm = pipeline(
+                    "text-generation",
+                    model="microsoft/phi-2",  # 2.7B model, good balance
+                    device_map="auto",
+                    trust_remote_code=True
+                )
+                print("LLM loaded successfully!")
+            except Exception as e:
+                print(f"Warning: Could not load LLM: {e}")
+                print("Using mock responses. Install transformers to enable AI responses.")
         else:
-            print(f"Warning: Model not found at {model_path}. Using mock responses.")
-            self.llm = None
+            print("Warning: transformers not installed. Using mock responses.")
+            print("Install with: pip install transformers accelerate")
     
     def query(self, question: str, top_k: int = 5) -> Dict[str, Any]:
         """Process a query using RAG"""
@@ -89,17 +100,25 @@ Answer:"""
         
         if self.llm is None:
             # Mock response when model is not available
-            return f"[Mock Response] Based on the provided context, here's a summary related to your question. (Please download a model to get real responses)"
+            return f"[Mock Response] Based on the provided context, here's a summary related to your question. Install transformers library to get real AI-generated responses: pip install transformers accelerate"
         
         try:
+            # Generate response using transformers
             response = self.llm(
                 prompt,
-                max_tokens=self.max_tokens,
+                max_new_tokens=self.max_tokens,
                 temperature=self.temperature,
-                stop=["Question:", "\n\n\n"]
+                do_sample=True,
+                top_p=0.95
             )
             
-            return response["choices"][0]["text"].strip()
+            # Extract generated text
+            generated_text = response[0]["generated_text"]
+            
+            # Remove the prompt from the response
+            answer = generated_text.replace(prompt, "").strip()
+            
+            return answer
         except Exception as e:
             return f"Error generating response: {str(e)}"
     
