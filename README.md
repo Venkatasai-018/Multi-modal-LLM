@@ -272,3 +272,29 @@ Contributions welcome! This is a simplified implementation focused on core RAG f
 
 **Note**: This is a simplified version for learning and prototyping. For production use, add error handling, authentication, rate limiting, and proper testing.
 Multi-modal-LLM
+
+
+
+
+
+
+.env 
+
+
+# Local Model Paths
+MODEL_PATH=./models/qwen2.5-1.5b-instruct-q4_k_m.gguf
+EMBEDDING_MODEL=all-MiniLM-L6-v2
+
+# Storage Paths
+UPLOAD_DIR=./data/uploads
+VECTOR_DB_PATH=./data/vector_db
+LOGS_DIR=./logs
+
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+
+# Model Configuration
+MAX_TOKENS=512
+TEMPERATURE=0.7
+TOP_K=5
