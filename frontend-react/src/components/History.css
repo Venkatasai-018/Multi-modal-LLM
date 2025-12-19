@@ -1,19 +1,15 @@
-.history-card {
-  margin-top: 24px;
-}
-
 .tabs {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-.tab {
-  padding: 8px 16px;
+.tabs button {
+  padding: 10px 16px;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   font-size: 0.875rem;
   font-weight: 600;
   color: #718096;
@@ -21,11 +17,11 @@
   transition: all 0.2s;
 }
 
-.tab:hover {
+.tabs button:hover {
   color: #4299e1;
 }
 
-.tab.active {
+.tabs button.active {
   color: #4299e1;
   border-bottom-color: #4299e1;
 }
@@ -39,65 +35,59 @@
   padding: 16px;
   background: #f7fafc;
   border-radius: 8px;
-  margin-bottom: 12px;
-  border-left: 3px solid #4299e1;
+  margin-bottom: 10px;
+  border-left: 4px solid #4299e1;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.history-header {
+.history-item:hover {
+  background: #edf2f7;
+}
+
+.header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  cursor: pointer;
 }
 
-.history-question {
+.question {
   flex: 1;
   font-size: 0.875rem;
   color: #2d3748;
   line-height: 1.5;
 }
 
-.history-question strong {
+.question strong {
   color: #4299e1;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
-.history-controls {
+.controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #718096;
   flex-shrink: 0;
 }
 
-.history-time {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: #718096;
-}
-
-.history-controls svg {
-  color: #718096;
-  cursor: pointer;
-}
-
-.history-answer {
+.answer {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 2px solid #e2e8f0;
   font-size: 0.875rem;
   color: #4a5568;
   line-height: 1.6;
 }
 
-.history-answer strong {
+.answer strong {
   color: #48bb78;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
-.empty-state {
+.empty {
   text-align: center;
   padding: 48px;
   color: #718096;

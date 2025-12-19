@@ -4,44 +4,30 @@ import { FiUpload, FiCheck, FiX } from 'react-icons/fi';
 import './FileUpload.css';
 
 const FileUpload = ({ apiUrl, onSuccess }) => {
-  const [uploadStatus, setUploadStatus] = useState(null);
-  const [recentFiles, setRecentFiles] = useState([]);
+  const [status, setStatus] = useState('');
+  const [files, setFiles] = useState([]);
 
   const onDrop = async (acceptedFiles) => {
-    setUploadStatus({ type: 'uploading', message: 'Uploading files...' });
+    setStatus('Uploading...');
+    const newFiles = [];
 
-    try {
-      for (const file of acceptedFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
+    for (const file of acceptedFiles) {
+      const formData = new FormData();
+      formData.append('file', file);
 
-        const res = await fetch(`${apiUrl}/upload`, {
-          method: 'POST',
-          body: formData
-        });
-
+      try {
+        const res = await fetch(`${apiUrl}/upload`, { method: 'POST', body: formData });
         const data = await res.json();
-
-        if (res.ok) {
-          setRecentFiles(prev => [
-            { name: file.name, status: 'success', message: data.message },
-            ...prev.slice(0, 4)
-          ]);
-        } else {
-          setRecentFiles(prev => [
-            { name: file.name, status: 'error', message: data.detail },
-            ...prev.slice(0, 4)
-          ]);
-        }
+        newFiles.push({ name: file.name, success: res.ok });
+      } catch {
+        newFiles.push({ name: file.name, success: false });
       }
-
-      setUploadStatus({ type: 'success', message: `Successfully uploaded ${acceptedFiles.length} file(s)` });
-      onSuccess();
-      setTimeout(() => setUploadStatus(null), 3000);
-    } catch (error) {
-      setUploadStatus({ type: 'error', message: error.message });
-      setTimeout(() => setUploadStatus(null), 5000);
     }
+
+    setFiles(prev => [...newFiles, ...prev].slice(0, 5));
+    setStatus(newFiles.every(f => f.success) ? 'Success!' : 'Some files failed');
+    setTimeout(() => setStatus(''), 3000);
+    onSuccess();
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -50,42 +36,28 @@ const FileUpload = ({ apiUrl, onSuccess }) => {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'image/*': ['.png', '.jpg', '.jpeg'],
-      'audio/*': ['.mp3', '.wav', '.m4a']
+      'audio/*': ['.mp3', '.wav']
     }
   });
 
   return (
-    <div className="card upload-card">
-      <h2>📤 Upload Files</h2>
-      
+    <div className="card">
+      <h2>📤 Upload Documents</h2>
       <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
         <input {...getInputProps()} />
-        <FiUpload size={48} />
-        {isDragActive ? (
-          <p>Drop files here...</p>
-        ) : (
-          <>
-            <p>Drag & drop files here, or click to select</p>
-            <span className="file-types">PDF, DOCX, Images, Audio</span>
-          </>
-        )}
+        <FiUpload size={40} />
+        <p>{isDragActive ? 'Drop files here' : 'Drop files or click to browse'}</p>
+        <span className="file-hint">PDF, DOCX, Images, Audio</span>
       </div>
-
-      {uploadStatus && (
-        <div className={`status-message ${uploadStatus.type}`}>
-          {uploadStatus.type === 'success' && <FiCheck />}
-          {uploadStatus.type === 'error' && <FiX />}
-          <span>{uploadStatus.message}</span>
-        </div>
-      )}
-
-      {recentFiles.length > 0 && (
-        <div className="recent-files">
-          <h3>Recent Uploads</h3>
-          {recentFiles.map((file, idx) => (
-            <div key={idx} className={`file-item ${file.status}`}>
-              <span className="file-name">{file.name}</span>
-              {file.status === 'success' ? <FiCheck /> : <FiX />}
+      
+      {status && <div className="upload-status">{status}</div>}
+      
+      {files.length > 0 && (
+        <div className="file-list">
+          {files.map((file, i) => (
+            <div key={i} className="file-item">
+              <span>{file.name}</span>
+              {file.success ? <FiCheck color="#48bb78" /> : <FiX color="#f56565" />}
             </div>
           ))}
         </div>

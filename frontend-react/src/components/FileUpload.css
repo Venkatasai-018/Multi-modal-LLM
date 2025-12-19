@@ -1,108 +1,56 @@
-.upload-card {
-  height: fit-content;
-}
-
 .dropzone {
   border: 2px dashed #cbd5e0;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 48px 24px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
   background: #f7fafc;
 }
 
-.dropzone:hover {
-  border-color: #4299e1;
-  background: #edf2f7;
-}
-
-.dropzone.active {
+.dropzone:hover, .dropzone.active {
   border-color: #4299e1;
   background: #e6f2ff;
 }
 
 .dropzone svg {
   color: #4299e1;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .dropzone p {
   font-size: 1rem;
   color: #2d3748;
-  margin-bottom: 8px;
+  margin: 8px 0;
 }
 
-.file-types {
+.file-hint {
   font-size: 0.875rem;
   color: #718096;
 }
 
-.status-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.upload-status {
+  margin-top: 16px;
   padding: 12px;
   border-radius: 8px;
-  margin-top: 16px;
-  font-size: 0.875rem;
-}
-
-.status-message.success {
   background: #c6f6d5;
   color: #22543d;
-}
-
-.status-message.error {
-  background: #fed7d7;
-  color: #742a2a;
-}
-
-.status-message.uploading {
-  background: #bee3f8;
-  color: #2c5282;
-}
-
-.recent-files {
-  margin-top: 24px;
-}
-
-.recent-files h3 {
+  text-align: center;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #718096;
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+}
+
+.file-list {
+  margin-top: 20px;
 }
 
 .file-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
+  padding: 10px 12px;
   background: #f7fafc;
   border-radius: 8px;
   margin-bottom: 8px;
   font-size: 0.875rem;
-}
-
-.file-item.success {
-  border-left: 3px solid #48bb78;
-}
-
-.file-item.error {
-  border-left: 3px solid #f56565;
-}
-
-.file-item svg {
-  flex-shrink: 0;
-}
-
-.file-name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: #2d3748;
 }
