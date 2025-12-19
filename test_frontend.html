@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #3182ce;
+        }
+        .result {
+            background: #f7fafc;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #4299e1;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #f56565;
+            background: #fed7d7;
+        }
+        .success {
+            border-left-color: #48bb78;
+            background: #c6f6d5;
+        }
+        h1 { color: #2d3748; }
+        h2 { color: #4299e1; }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .stats-display {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .stat-box {
+            flex: 1;
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4299e1;
+        }
+        .stat-label {
+            color: #718096;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Backend API Test Page</h1>
+    <p>Use this page to verify your backend is working correctly before testing React app.</p>
+
+    <!-- Stats Test -->
+    <div class="test-section">
+        <h2>1. Test Statistics API</h2>
+        <button onclick="testStats()">Fetch Stats</button>
+        <div class="stats-display" id="statsDisplay" style="display:none;">
+            <div class="stat-box">
+                <div class="stat-value" id="docCount">0</div>
+                <div class="stat-label">Documents</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="queryCount">0</div>
+                <div class="stat-label">Queries</div>
+            </div>
+        </div>
+        <div id="statsResult"></div>
+    </div>
+
+    <!-- Query Test -->
+    <div class="test-section">
+        <h2>2. Test Query API</h2>
+        <input type="text" id="queryInput" placeholder="Ask a question..." style="width: 60%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px;">
+        <button onclick="testQuery()">Send Query</button>
+        <div id="queryResult"></div>
+    </div>
+
+    <!-- History Test -->
+    <div class="test-section">
+        <h2>3. Test History API</h2>
+        <button onclick="testHistory()">Fetch History</button>
+        <div id="historyResult"></div>
+    </div>
+
+    <!-- Upload Test -->
+    <div class="test-section">
+        <h2>4. Test Upload API</h2>
+        <input type="file" id="fileInput" style="margin-bottom: 10px;">
+        <button onclick="testUpload()">Upload File</button>
+        <div id="uploadResult"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = isError ? 'result error' : 'result success';
+            element.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+
+        async function testStats() {
+            try {
+                console.log('Fetching stats from:', API_URL + '/stats');
+                const response = await fetch(API_URL + '/stats');
+                const data = await response.json();
+                console.log('Stats response:', data);
+                
+                // Update display
+                document.getElementById('docCount').textContent = data.total_documents || 0;
+                document.getElementById('queryCount').textContent = data.total_queries || 0;
+                document.getElementById('statsDisplay').style.display = 'flex';
+                
+                showResult('statsResult', data);
+            } catch (error) {
+                console.error('Stats error:', error);
+                showResult('statsResult', { error: error.message }, true);
+            }
+        }
+
+        async function testQuery() {
+            const question = document.getElementById('queryInput').value || 'What is AI?';
+            try {
+                console.log('Sending query:', question);
+                const response = await fetch(API_URL + '/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question, top_k: 3 })
+                });
+                const data = await response.json();
+                console.log('Query response:', data);
+                showResult('queryResult', data);
+            } catch (error) {
+                console.error('Query error:', error);
+                showResult('queryResult', { error: error.message }, true);
+            }
+        }
+
+        async function testHistory() {
+            try {
+                console.log('Fetching history from:', API_URL + '/history');
+                const response = await fetch(API_URL + '/history');
+                const data = await response.json();
+                console.log('History response:', data);
+                showResult('historyResult', data);
+            } catch (error) {
+                console.error('History error:', error);
+                showResult('historyResult', { error: error.message }, true);
+            }
+        }
+
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                console.log('Uploading file:', fileInput.files[0].name);
+                const response = await fetch(API_URL + '/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                console.log('Upload response:', data);
+                showResult('uploadResult', data);
+            } catch (error) {
+                console.error('Upload error:', error);
+                showResult('uploadResult', { error: error.message }, true);
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            console.log('Page loaded, testing stats...');
+            testStats();
+        };
+    </script>
+</body>
+</html>

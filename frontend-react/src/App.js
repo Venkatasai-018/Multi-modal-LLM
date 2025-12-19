@@ -24,12 +24,25 @@ function App() {
 
   const fetchStats = async () => {
     try {
+      console.log('Fetching stats from:', `${API_URL}/stats`);
       const res = await fetch(`${API_URL}/stats`);
+      console.log('Stats response status:', res.status);
       const data = await res.json();
-      console.log('Stats fetched:', data);
-      setStats(data);
+      console.log('Stats raw data received:', data);
+      console.log('total_documents:', data.total_documents);
+      console.log('total_queries:', data.total_queries);
+      
+      // Ensure we have the right structure
+      const statsData = {
+        total_documents: data.total_documents ?? 0,
+        total_queries: data.total_queries ?? 0,
+        index_size: data.index_size ?? 0
+      };
+      console.log('Setting stats to:', statsData);
+      setStats(statsData);
     } catch (error) {
       console.error('Error fetching stats:', error);
+      setStats({ total_documents: 0, total_queries: 0 });
     }
   };
 
@@ -45,12 +58,16 @@ function App() {
   };
 
   useEffect(() => {
+    console.log('=== App mounted or refreshKey changed ===');
     fetchStats();
     fetchHistory();
+    
+    // Refresh every 5 seconds for testing (change to 30000 later)
     const interval = setInterval(() => {
+      console.log('Auto-refreshing data...');
       fetchStats();
       fetchHistory();
-    }, 30000); // Refresh every 30 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [refreshKey]);
@@ -91,6 +108,56 @@ function App() {
 
         {/* React Test Component - Remove this after testing */}
         <ReactTest />
+
+        {/* Manual refresh button */}
+        <div style={{marginBottom: '20px', textAlign: 'center', padding: '15px', background: '#e6f2ff', borderRadius: '8px'}}>
+          <button 
+            onClick={() => {
+              console.log('Manual refresh clicked');
+              fetchStats();
+              fetchHistory();
+            }}
+            style={{
+              padding: '12px 24px',
+              background: '#4299e1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            🔄 Manually Refresh Stats
+          </button>
+          <button 
+            onClick={async () => {
+              console.log('Testing direct fetch...');
+              try {
+                const response = await fetch('http://localhost:8000/stats');
+                const data = await response.json();
+                console.log('Direct fetch result:', data);
+                alert('Check console! Data: ' + JSON.stringify(data));
+              } catch (error) {
+                console.error('Direct fetch error:', error);
+                alert('Error: ' + error.message);
+              }
+            }}
+            style={{
+              padding: '12px 24px',
+              background: '#48bb78',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            🧪 Test Direct Fetch (Will show alert)
+          </button>
+        </div>
 
         <Statistics stats={stats} />
         
