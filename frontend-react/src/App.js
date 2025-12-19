@@ -68,10 +68,23 @@ function App() {
 
       <div className="container">
         {/* Debug Panel */}
-        <div style={{background: '#fff3cd', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.875rem'}}>
-          <strong>🐛 Debug Info:</strong> Stats loaded: {stats.total_documents} docs, {stats.total_queries} queries | 
-          History loaded: {history.length} items | 
-          API: {API_URL}
+        <div style={{background: '#fff3cd', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '1rem'}}>
+          <div style={{marginBottom: '10px'}}><strong>🐛 Debug Info:</strong></div>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', fontSize: '1.1rem'}}>
+            <div style={{background: '#4299e1', color: 'white', padding: '10px', borderRadius: '4px', textAlign: 'center'}}>
+              <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{stats.total_documents}</div>
+              <div style={{fontSize: '0.875rem'}}>Documents</div>
+            </div>
+            <div style={{background: '#48bb78', color: 'white', padding: '10px', borderRadius: '4px', textAlign: 'center'}}>
+              <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{stats.total_queries}</div>
+              <div style={{fontSize: '0.875rem'}}>Queries</div>
+            </div>
+            <div style={{background: '#ed8936', color: 'white', padding: '10px', borderRadius: '4px', textAlign: 'center'}}>
+              <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{history.length}</div>
+              <div style={{fontSize: '0.875rem'}}>History Items</div>
+            </div>
+          </div>
+          <div style={{marginTop: '10px', fontSize: '0.875rem'}}>API: {API_URL}</div>
         </div>
 
         {/* React Test Component - Remove this after testing */}

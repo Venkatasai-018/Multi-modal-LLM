@@ -15,8 +15,18 @@ const Statistics = ({ stats }) => {
           <FiFileText size={32} />
         </div>
         <div className="stat-content">
-          <div className="stat-value">{totalDocs}</div>
-          <div className="stat-label">Documents</div>
+          <div className="stat-value" style={{
+            fontSize: '2rem',
+            fontWeight: '600',
+            color: '#2d3748',
+            lineHeight: '1',
+            marginBottom: '4px',
+            display: 'block',
+            visibility: 'visible'
+          }}>
+            {totalDocs}
+          </div>
+          <div className="stat-label" style={{display: 'block', visibility: 'visible'}}>Documents</div>
         </div>
       </div>
 
@@ -25,8 +35,18 @@ const Statistics = ({ stats }) => {
           <FiMessageSquare size={32} />
         </div>
         <div className="stat-content">
-          <div className="stat-value">{totalQueries}</div>
-          <div className="stat-label">Queries</div>
+          <div className="stat-value" style={{
+            fontSize: '2rem',
+            fontWeight: '600',
+            color: '#2d3748',
+            lineHeight: '1',
+            marginBottom: '4px',
+            display: 'block',
+            visibility: 'visible'
+          }}>
+            {totalQueries}
+          </div>
+          <div className="stat-label" style={{display: 'block', visibility: 'visible'}}>Queries</div>
         </div>
       </div>
     </div>

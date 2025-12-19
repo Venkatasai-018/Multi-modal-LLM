@@ -94,28 +94,46 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
       )}
 
       {response && !response.error && (
-        <div className="response-container">
+        <div className="response-container" style={{marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e2e8f0'}}>
           {response.answer ? (
             <>
-              <div className="answer">
-                <h3>Answer</h3>
-                <div className="answer-text">{response.answer}</div>
-                <div className="meta">
+              <div className="answer" style={{marginBottom: '24px'}}>
+                <h3 style={{fontSize: '1rem', fontWeight: '600', color: '#2d3748', marginBottom: '12px'}}>Answer</h3>
+                <div className="answer-text" style={{
+                  padding: '16px',
+                  background: '#f7fafc',
+                  borderRadius: '8px',
+                  lineHeight: '1.6',
+                  color: '#2d3748',
+                  fontSize: '1rem',
+                  whiteSpace: 'pre-wrap',
+                  display: 'block',
+                  visibility: 'visible'
+                }}>
+                  {response.answer}
+                </div>
+                <div className="meta" style={{marginTop: '12px', fontSize: '0.875rem', color: '#718096'}}>
                   <span>⏱️ {response.processing_time?.toFixed(2)}s</span>
                 </div>
               </div>
 
               {response.sources && response.sources.length > 0 && (
-                <div className="sources">
-                  <h3>📚 Sources ({response.sources.length})</h3>
+                <div className="sources" style={{marginTop: '24px'}}>
+                  <h3 style={{fontSize: '1rem', fontWeight: '600', color: '#2d3748', marginBottom: '12px'}}>📚 Sources ({response.sources.length})</h3>
                   {response.sources.map((source, idx) => (
-                    <div key={idx} className="source-item">
-                      <div className="source-header">
-                        <span className="source-file">📄 {source.file}</span>
-                        <span className="source-score">{(source.similarity * 100).toFixed(0)}%</span>
+                    <div key={idx} className="source-item" style={{
+                      background: '#f7fafc',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      marginBottom: '12px',
+                      borderLeft: '3px solid #4299e1'
+                    }}>
+                      <div className="source-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
+                        <span className="source-file" style={{fontWeight: '600', color: '#2d3748', fontSize: '0.875rem'}}>📄 {source.file}</span>
+                        <span className="source-score" style={{background: '#4299e1', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600'}}>{(source.similarity * 100).toFixed(0)}%</span>
                       </div>
-                      <div className="source-type">{source.type}</div>
-                      <div className="source-excerpt">{source.excerpt}</div>
+                      <div className="source-type" style={{fontSize: '0.75rem', color: '#718096', textTransform: 'uppercase', marginBottom: '8px'}}>{source.type}</div>
+                      <div className="source-excerpt" style={{fontSize: '0.875rem', color: '#4a5568', lineHeight: '1.5'}}>{source.excerpt}</div>
                     </div>
                   ))}
                 </div>
