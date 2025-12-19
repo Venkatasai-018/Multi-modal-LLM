@@ -134,6 +134,132 @@ button:disabled {
   transform: none;
 }
 
+.upload-zone {
+  border: 3px dashed #cbd5e0;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.upload-zone:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.upload-zone.drag-active {
+  border-color: #667eea;
+  background: #e6f0ff;
+  border-style: solid;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.upload-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.upload-hint {
+  font-size: 0.9rem;
+  color: #999;
+  margin: 12px 0;
+}
+
+.file-label {
+  display: inline-block;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 8px 0;
+}
+
+.file-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.file-types {
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 12px;
+}
+
+.selected-files {
+  background: #f0f4ff;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border-left: 4px solid #667eea;
+}
+
+.selected-files strong {
+  color: #667eea;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.file-name {
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  margin: 6px 0;
+  color: #333;
+  font-size: 0.9rem;
+  border: 1px solid #e0e0e0;
+}
+
+.upload-progress {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.upload-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  margin: 6px 0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.upload-item.uploading {
+  background: #fff8dc;
+  border-left: 4px solid #ffc107;
+}
+
+.upload-item.success {
+  background: #e8f5e9;
+  border-left: 4px solid #48bb78;
+}
+
+.upload-item.error {
+  background: #ffebee;
+  border-left: 4px solid #f44336;
+}
+
+.status-badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
 .answer-card {
   animation: slideUp 0.4s ease-out;
 }
