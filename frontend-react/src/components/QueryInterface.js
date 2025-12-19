@@ -85,11 +85,14 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
 
       {/* Debug: Show response state */}
       {response && (
-        <div style={{background: '#e6f2ff', padding: '8px', borderRadius: '4px', fontSize: '0.75rem', marginTop: '10px'}}>
-          Debug: Has response: {response ? 'Yes' : 'No'} | 
-          Has error: {response?.error ? 'Yes' : 'No'} | 
-          Has answer: {response?.answer ? 'Yes' : 'No'} | 
-          Answer length: {response?.answer?.length || 0}
+        <div style={{background: '#e6f2ff', padding: '12px', borderRadius: '8px', fontSize: '0.875rem', marginTop: '12px', border: '2px solid #4299e1'}}>
+          <strong>🔍 Response Debug:</strong><br/>
+          Has response: <strong>{response ? '✅ YES' : '❌ NO'}</strong> | 
+          Has error: <strong>{response?.error ? '❌ YES' : '✅ NO'}</strong> | 
+          Has answer: <strong>{response?.answer ? '✅ YES' : '❌ NO'}</strong> | 
+          Answer length: <strong>{response?.answer?.length || 0} chars</strong>
+          <br/>
+          <span style={{fontSize: '0.75rem'}}>If "Has answer" is YES but you don't see it below, there's a rendering issue.</span>
         </div>
       )}
 

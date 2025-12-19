@@ -68,23 +68,25 @@ function App() {
 
       <div className="container">
         {/* Debug Panel */}
-        <div style={{background: '#fff3cd', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '1rem'}}>
-          <div style={{marginBottom: '10px'}}><strong>🐛 Debug Info:</strong></div>
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', fontSize: '1.1rem'}}>
-            <div style={{background: '#4299e1', color: 'white', padding: '10px', borderRadius: '4px', textAlign: 'center'}}>
-              <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{stats.total_documents}</div>
-              <div style={{fontSize: '0.875rem'}}>Documents</div>
+        <div style={{background: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', fontSize: '1rem', border: '3px solid #ed8936'}}>
+          <div style={{marginBottom: '15px', fontSize: '1.2rem'}}><strong>🐛 Debug Info - Can you see these numbers?</strong></div>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', fontSize: '1.1rem'}}>
+            <div style={{background: '#4299e1', color: 'white', padding: '20px', borderRadius: '8px', textAlign: 'center', border: '3px solid #2b6cb0'}}>
+              <div style={{fontSize: '3rem', fontWeight: 'bold', lineHeight: '1', marginBottom: '10px'}}>{stats.total_documents ?? 'NULL'}</div>
+              <div style={{fontSize: '1rem', fontWeight: '600'}}>📄 Documents</div>
             </div>
-            <div style={{background: '#48bb78', color: 'white', padding: '10px', borderRadius: '4px', textAlign: 'center'}}>
-              <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{stats.total_queries}</div>
-              <div style={{fontSize: '0.875rem'}}>Queries</div>
+            <div style={{background: '#48bb78', color: 'white', padding: '20px', borderRadius: '8px', textAlign: 'center', border: '3px solid #2f855a'}}>
+              <div style={{fontSize: '3rem', fontWeight: 'bold', lineHeight: '1', marginBottom: '10px'}}>{stats.total_queries ?? 'NULL'}</div>
+              <div style={{fontSize: '1rem', fontWeight: '600'}}>💬 Queries</div>
             </div>
-            <div style={{background: '#ed8936', color: 'white', padding: '10px', borderRadius: '4px', textAlign: 'center'}}>
-              <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{history.length}</div>
-              <div style={{fontSize: '0.875rem'}}>History Items</div>
+            <div style={{background: '#ed8936', color: 'white', padding: '20px', borderRadius: '8px', textAlign: 'center', border: '3px solid #c05621'}}>
+              <div style={{fontSize: '3rem', fontWeight: 'bold', lineHeight: '1', marginBottom: '10px'}}>{history.length ?? 'NULL'}</div>
+              <div style={{fontSize: '1rem', fontWeight: '600'}}>🕐 History Items</div>
             </div>
           </div>
-          <div style={{marginTop: '10px', fontSize: '0.875rem'}}>API: {API_URL}</div>
+          <div style={{marginTop: '15px', fontSize: '0.875rem', padding: '10px', background: 'white', borderRadius: '4px'}}>
+            <strong>Raw values:</strong> Documents={JSON.stringify(stats.total_documents)} | Queries={JSON.stringify(stats.total_queries)} | History={history.length} | API: {API_URL}
+          </div>
         </div>
 
         {/* React Test Component - Remove this after testing */}
