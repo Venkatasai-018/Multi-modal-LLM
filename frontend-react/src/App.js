@@ -7,8 +7,10 @@ const API_URL = 'http://localhost:8000';
 function App() {
   const [stats, setStats] = useState({ total_documents: 0, total_queries: 0 });
   const [history, setHistory] = useState([]);
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState(null);
@@ -73,41 +75,88 @@ function App() {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(selectedFiles);
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setFiles(droppedFiles);
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (files.length === 0) return;
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    setUploadStatus([]);
+    const results = [];
 
-    try {
-      const res = await fetch(`${API_URL}/upload`, { 
-        method: 'POST', 
-        mode: 'cors',
-        body: formData 
-      });
-      const data = await res.json();
-      
-      if (res.ok) {
-        console.log('✅ Upload success:', data);
-        alert(`✅ ${data.message || 'File uploaded successfully!'}`);
-        setFile(null);
-        e.target.reset();
-        fetchData();
-      } else {
-        console.error('❌ Upload failed:', data);
-        alert(`❌ Upload failed: ${data.detail || 'Unknown error'}`);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        setUploadStatus(prev => [...prev, { name: file.name, status: 'uploading', message: 'Uploading...' }]);
+        
+        const res = await fetch(`${API_URL}/upload`, { 
+          method: 'POST', 
+          mode: 'cors',
+          body: formData 
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          console.log('✅ Upload success:', file.name);
+          results.push({ name: file.name, status: 'success', message: data.message || 'Success' });
+          setUploadStatus(prev => prev.map(item => 
+            item.name === file.name 
+              ? { ...item, status: 'success', message: `✅ ${data.chunks_created || 0} chunks` }
+              : item
+          ));
+        } else {
+          console.error('❌ Upload failed:', file.name);
+          results.push({ name: file.name, status: 'error', message: data.detail || 'Failed' });
+          setUploadStatus(prev => prev.map(item => 
+            item.name === file.name 
+              ? { ...item, status: 'error', message: `❌ ${data.detail}` }
+              : item
+          ));
+        }
+      } catch (error) {
+        console.error('❌ Upload error:', file.name, error);
+        results.push({ name: file.name, status: 'error', message: error.message });
+        setUploadStatus(prev => prev.map(item => 
+          item.name === file.name 
+            ? { ...item, status: 'error', message: `❌ ${error.message}` }
+            : item
+        ));
       }
-    } catch (error) {
-      console.error('❌ Upload error:', error);
-      alert(`❌ Upload failed: ${error.message}`);
-    } finally {
-      setUploading(false);
     }
+
+    setUploading(false);
+    setFiles([]);
+    e.target.reset();
+    fetchData();
+    
+    const successCount = results.filter(r => r.status === 'success').length;
+    const failCount = results.filter(r => r.status === 'error').length;
+    alert(`Upload complete!\n✅ Success: ${successCount}\n❌ Failed: ${failCount}`);
   };
 
   const handleQuery = async (e) => {
@@ -116,16 +165,55 @@ function App() {
 
     setLoading(true);
     setAnswer(null);
-
-    try {
-      const res = await fetch(`${API_URL}/query`, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, top_k: 4 })
-      });
-      const data = await res.json();
-      
+s</h2>
+          <form onSubmit={handleUpload}>
+            <div 
+              className={`upload-zone ${dragActive ? 'drag-active' : ''}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <p className="upload-icon">📤</p>
+              <p className="upload-text">Drag & drop files here</p>
+              <p className="upload-hint">or</p>
+              <input
+                type="file"
+                id="fileInput"
+                onChange={handleFileChange}
+                accept=".pdf,.docx,.png,.jpg,.jpeg,.mp3,.wav"
+                multiple
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="fileInput" className="file-label">
+                Browse Files
+              </label>
+              <p className="file-types">PDF, DOCX, Images, Audio</p>
+            </div>
+            
+            {files.length > 0 && (
+              <div className="selected-files">
+                <strong>{files.length} file(s) selected:</strong>
+                {files.map((file, i) => (
+                  <div key={i} className="file-name">{file.name}</div>
+                ))}
+              </div>
+            )}
+            
+            {uploadStatus.length > 0 && (
+              <div className="upload-progress">
+                {uploadStatus.map((item, i) => (
+                  <div key={i} className={`upload-item ${item.status}`}>
+                    <span>{item.name}</span>
+                    <span className="status-badge">{item.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <button type="submit" disabled={files.length === 0 || uploading}>
+              {uploading ? `Uploading... (${uploadStatus.filter(s => s.status === 'success').length}/${files.length})` : `Upload ${files.length} File(s)`
       if (res.ok) {
         console.log('✅ Query success:', data);
         setAnswer(data);

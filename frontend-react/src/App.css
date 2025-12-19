@@ -95,14 +95,6 @@ form {
   gap: 12px;
 }
 
-input[type="file"] {
-  padding: 12px;
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
 textarea {
   width: 100%;
   padding: 14px;
