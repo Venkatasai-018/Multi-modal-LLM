@@ -22,14 +22,11 @@ class RAGPipeline:
         
         # Load lightweight model using transformers
         if TRANSFORMERS_AVAILABLE:
-            print("Loading Qwen2.5-1.5B model (best accuracy-speed balance)...")
+            print("Loading Qwen2.5-0.5B model (tiny, fast, 1GB)...")
             try:
-                # Qwen2.5-1.5B - Best balance of accuracy and speed for CPU
-                # Alternative models:
-                # "Qwen/Qwen2.5-0.5B-Instruct" - Fastest but less accurate
-                # "microsoft/Phi-3-mini-4k-instruct" - More accurate but slower
-                # "TinyLlama/TinyLlama-1.1B-Chat-v1.0" - Fast but less accurate
-                model_name = "Qwen/Qwen2.5-1.5B-Instruct"
+                # Qwen2.5-0.5B - Smallest model, ~1GB, fastest on CPU
+                # Perfect for low-resource systems
+                model_name = "Qwen/Qwen2.5-0.5B-Instruct"
                 
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
                 self.llm = AutoModelForCausalLM.from_pretrained(
@@ -38,7 +35,7 @@ class RAGPipeline:
                     device_map="cpu",
                     low_cpu_mem_usage=True
                 )
-                print("✅ Qwen2.5-1.5B loaded successfully! (Excellent accuracy + good speed)")
+                print("✅ Qwen2.5-0.5B loaded successfully! (~1GB model, very fast)")
             except Exception as e:
                 print(f"Warning: Could not load model: {e}")
                 print("Using mock responses.")
