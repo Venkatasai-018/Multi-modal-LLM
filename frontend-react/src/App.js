@@ -21,16 +21,32 @@ function App() {
 
   const fetchData = async () => {
     try {
+      console.log('Fetching data from:', API_URL);
+      
       const [statsRes, historyRes] = await Promise.all([
         fetch(`${API_URL}/stats`),
         fetch(`${API_URL}/history`)
       ]);
+      
+      console.log('Stats response:', statsRes.status, statsRes.ok);
+      console.log('History response:', historyRes.status, historyRes.ok);
+      
+      if (!statsRes.ok || !historyRes.ok) {
+        throw new Error('Backend not responding properly');
+      }
+      
       const statsData = await statsRes.json();
       const historyData = await historyRes.json();
+      
+      console.log('Stats data received:', statsData);
+      console.log('History data received:', historyData);
+      console.log('Number of history items:', historyData.history?.length);
+      
       setStats(statsData);
       setHistory(historyData.history || []);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching data:', error);
+      console.log('Make sure backend is running at:', API_URL);
     }
   };
 
