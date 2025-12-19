@@ -212,7 +212,7 @@ function App() {
       <div className="main-grid">
         <div className="card">
           <h2>📤 Upload Documents</h2>
-          <form onSubmit={handleUpload}>
+          <form onSubmit={handleUpload} encType="multipart/form-data">
             <div 
               className={`upload-zone ${dragActive ? 'drag-active' : ''}`}
               onDragEnter={handleDrag}
