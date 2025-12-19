@@ -1,0 +1,578 @@
+import React, { useState, useEffect, useRef } from 'react';
+import './App.css';
+
+const API_URL = 'http://localhost:8000';
+
+function App() {
+  const [stats, setStats] = useState({ total_documents: 0, total_queries: 0 });
+  const [documents, setDocuments] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [question, setQuestion] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [theme, setTheme] = useState('light');
+  
+  const chatAreaRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const questionInputRef = useRef(null);
+
+  useEffect(() => {
+    testConnection();
+    fetchData();
+    
+    // Load theme from localStorage
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+    document.body.className = savedTheme;
+  }, []);
+
+  useEffect(() => {
+    if (showToast = (message, type = 'info') => {
+    setToast({ message, type });
+  };
+
+  const testConnection = async () => {
+    try {
+      const res = await fetch(`${API_URL}/`, { mode: 'cors' });
+      if (res.ok) {
+        console.log('✅ Backend connected');
+        showToast('Connected to backend', 'success');
+      } else {
+        showToast('Backend not responding properly', 'warning');
+      }
+    } catch (error) {
+      console.error('❌ Backend connection failed:', error);
+      showToast('Cannot connect to backend on port 8000', 'error
+
+  const testConnection = async () => {
+    try {
+      const res = await fetch(`${API_URL}/`, { mode: 'cors' });
+      if (res.ok) {
+        console.log('✅ Backend connected');
+      } else {
+        alert('⚠️ Backend not responding properly');
+      }
+    } catch (error) {
+      console.error('❌ Backend connection failed:', error);
+      alert('❌ Cannot connect to backend. Make sure it\'s running on port 8000');
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      const [statsRes, historyRes] = await Promise.all([
+        fetch(`${API_URL}/stats`, { mode: 'cors' }),
+        fetch(`${API_URL}/history`, { mode: 'cors' })
+      ]);
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData);
+      }
+
+      if (historyRes.ok) {
+        const historyData = await historyRes.json();
+        setHistory(historyData.history || []);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    handleFileUpload(files);
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    handleFileUpload(files);
+  };
+
+  const handleFileUpload = async (files) => {
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      const docItem = {
+        name: file.name,
+        status: 'uploading',
+        message: 'Uploading...',
+        id: Date.now() + Math.random()
+      };
+      
+      setDocuments(prev => [...prev, docItem]);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch(`${API_URL}/upload`, {
+          method: 'POST',
+          mode: 'cors',
+          body: formData
+        });
+
+        const data = await res.json();, chunks: data.chunks_created }
+              : doc
+          ));
+          showToast(`${file.name} uploaded successfully`, 'success');
+        } else {
+          setDocuments(prev => prev.map(doc => 
+            doc.id === docItem.id 
+              ? { ...doc, status: 'error', message: data.detail || 'Failed' }
+              : doc
+          ));
+          showToast(`Failed to upload ${file.name}`, 'error');
+        }
+      } catch (error) {
+        setDocuments(prev => prev.map(doc => 
+          doc.id === docItem.id 
+            ? { ...doc, status: 'error', message: error.message }
+            : doc
+        ));
+        showToast(`Error uploading ${file.name}`, 'error');
+      }
+    }
+
+    fetchData();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const clearDocuments = () => {
+    if (window.confirm('Clear all documents from the list? (This won\'t delete files from the server)')) {
+      setDocuments([]);
+      showToast('Documents list cleared', 'info');
+    }
+  };
+
+  const deleteDocument = (docId) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== docId));
+    showToast('Document removed from list', 'info');
+  };
+
+  const clearChat = () => {
+    if (window.confirm('Clear all messages from chat?')) {
+      setMessages([]);
+      showToast('Chat cleared', 'info');
+    }
+  };
+
+  const exportChat = () => {
+    const chatData = messages.map(msg => ({
+      question: msg.question,
+      answer: msg.answer,
+      sources: msg.sources?.map(s => s.metadata?.file_path)
+    }));
+    
+    const blob = new Blob([JSON.stringify(chatData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Chat exported successfully', 'success');
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    document.body.className = newTheme;
+    localStorage.setItem('theme', newTheme);
+    showToast(`Switched to ${newTheme} mode`, 'info');
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+      showToast('Query failed', 'error');
+    showToast('Copied to clipboard', 'success');
+
+    fetchData();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleQuery = async (e) => {
+    e.preventDefault();
+    if (!question.trim() || isProcessing) return;
+
+    const currentQuestion = question.trim();
+    setQuestion('');
+    setIsProcessing(true);
+
+    const newMessage = {
+      id: Date.now(),
+      question: currentQuestion,
+      answer: null,
+      sources: [],
+      loading: true
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+
+    try {
+      const res = await fetch(`${API_URL}/query`, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: currentQuestion, top_k: 4 })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === newMessage.id 
+            ? { ...msg, answer: data.answer, sources: data.sources || [], loading: false }
+            : msg
+        ));
+        fetchData();
+      } else {
+        throw new Error(data.detail || 'Query failed');
+      }
+    } catch (error) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === newMessage.id 
+          ? { ...msg, answer: `❌ Error: ${error.message}`, loading: false, error: true }
+          : msg
+      ));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const loadHistoryItem = (item) => {
+    const existingMessage = messages.find(m => m.question === item.question);
+    if (existingMessage) return;
+
+    const historyMessage = {
+      id: Date.now(),
+      question: item.question,
+      answer: item.answer,
+      sources: [],
+      loading: false
+    };
+
+    setMessages(prev => [...prev, historyMessage]);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleQuery(e);
+    }
+  };
+const filteredHistory = history.filter(item => 
+    item.question.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div cldiv className="header-top">
+            <h1>📚 Document Library</h1>
+            <button 
+              className="icon-btn" 
+              onClick={() => setShowSettings(!showSettings)}
+              title="Settings"
+            >
+              ⚙️
+            </button>
+          </div>
+          <div className="stats">
+            <div className="stat-item">
+              <div className="stat-value">{stats.total_documents || 0}</div>
+              <div className="stat-label">Docs</div>
+            </div>
+            <div className="stat-item">
+              <div className="statheader">
+            <div className="section-title">📤 Upload Documents</div>
+            {documents.length > 0 && (
+              <button className="clear-btn" onClick={clearDocuments} title="Clear all">
+                🗑️
+              </button>
+            )}
+          es || 0}</div>
+              <div className="stat-label">Queries</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Settings Panel */}
+        {showSettings && (
+          <div className="settings-panel">
+            <div className="settings-item">
+              <span>Theme</span>
+              <button className="theme-toggle" onClick={toggleTheme}>
+                {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
+              </button>
+            </div>
+            <div className="settings-item">
+              <span>Backend</span>
+              <button className="btn-small" onClick={testConnection}>
+                Test Connection
+              </button>
+            </div>
+          </div>
+        )} Sidebar */}
+      <div className="sidebar">
+        <div className="sidebar-header">
+          <h1>📚 Document Library</h1>
+          <div className="stats">
+            <div className="stat-item">
+              <div className="stat-value">{stats.total_documents || 0}</div>
+              <div className="stat-label">Docs</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-value">{stats.total_queries || 0}</div>
+              <div className="stat-label">Queries</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="sidebar-content">
+          {/* Upload 
+                  key={doc.id} 
+                  className={`document-item ${selectedDoc?.id === doc.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedDoc(doc)}
+                >
+                  <div className="doc-icon">📄</div>
+                  <div className="doc-info">
+                    <div className="doc-name">{doc.name}</div>
+                    <div className="doc-meta">{doc.message}</div>
+                  </div>
+                  <div className={`doc-status ${doc.status}`}>
+                    {doc.status}
+                  </div>
+                  <button 
+                    className="doc-delete"
+                    onClick={(e) =header" style={{ marginTop: '24px' }}>
+            <div className="section-title">🕒 Recent Queries</div>
+          </div>
+          
+          {/* Search History */}
+          {history.length > 0 && (
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search history..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              {searchQuery && (
+                <button className="clear-search" onClick={() => setSearchQuery('')}>
+                  ✕
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="history-list">
+            {history.length === 0 ? (
+              <div className="empty-state">No queries yet</div>
+            ) : filteredHistory.length === 0 ? (
+              <div className="empty-state">No matching queries</div>
+            ) : (
+              filteredH   </button
+            <div className="upload-icon">📄</div>
+            <div className="upload-text">Drag & drop files here</div>
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              className="file-input" 
+              multiple 
+              accept=".pdf,.docx,.png,.jpg,.jpeg,.mp3,.wav"
+              onChange={handleFileChange}
+            />
+            <label 
+              htmlFor="file-input" 
+              className="upload-btn"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Browse Files
+            </label>
+          </div>
+
+          {/* Documents List */}
+          <div className="documents-list">
+            {documents.length === 0 ? (
+              <div className="empty-state">No documents uploaded yet</div>
+            ) : (
+              documents.map(doc => (
+                <div key={doc.id} className="document-item">
+          <div className="header-actions">
+            {messages.length > 0 && (
+              <>
+                <button className="btn-icon" onClick={exportChat} title="Export chat">
+                  📥 Export
+                </button>
+                <button className="btn-icon" onClick={clearChat} title="Clear chat">
+                  🗑️ Clear
+                </button>
+              </>
+            )}
+          </div>
+                  <div className="doc-icon">📄</div>
+                  <div className="doc-info">
+                    <div className="doc-name">{doc.name}</div>
+                    <div className="doc-meta">{doc.message}</div>
+                  </div>
+                  <div className={`doc-status ${doc.status}`}>
+                    {doc.status}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>header">
+                    <div className="message-label">Your Question</div>
+                    <button 
+                      className="copy-btn"
+                      onClick={() => copyToClipboard(msg.question)}
+                      title="Copy question"
+                    >
+                      📋
+                    </button>
+                  </div>
+                  <div className="message-text">{msg.question}</div>
+                </div>
+                <div className="message-answer">
+                  <div className="message-header">
+                    <div className="message-label">Answer</div>
+                    {!msg.loading && !msg.error && (
+                      <button 
+                        className="copy-btn"
+                        onClick={() => copyToClipboard(msg.answer)}
+                        title="Copy answer"
+                      >
+                        📋
+                      </button>
+                    )}
+                  
+          </div>
+          <div className="history-list">
+            {history.length === 0 ? (
+              <div className="empty-state">No queries yet</div>
+            ) : (
+              history.slice(-10).reverse().map((item, index) => (
+                <div 
+                  key={index} 
+                  className="history-item"
+                  onClick={() => loadHistoryItem(item)}
+                >
+                  <div className="history-question">{item.question}</div>
+                  <div className="history-time">
+                    {new Date(item.timestamp).toLocaleString()}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="main-content">
+        <div className="main-header">
+          <h2>💬 Ask questions about your documents</h2>
+        </div>
+
+        <div className="chat-area" ref={chatAreaRef}>
+          {messages.length === 0 ? (
+            <div className="welcome-message">
+              <h3>Welcome to your AI Research Assistant</h3>
+              <p>
+                Upload documents (PDFs, Word docs, images, or audio files) and start 
+                asking questions. I'll search through your documents and provide accurate 
+                answers with source citations.
+              </p>
+            </div>
+          ) : (
+            messages.map(msg => (
+              <div key={msg.id} className="message">
+                <div className="message-question">
+                  <div className="message-label">Your Question</div>
+                  <div className="message-text">{msg.question}</div>
+                </div>
+                <div className="message-answer">
+                  <div className="message-label">Answer</div>
+                  {msg.loading ? (
+                    <div className="answer-text">
+                      <span className="loading"></span> Searching...
+                    </div>
+                  ) : (
+                    <>
+                      <div className={`answer-text ${msg.error ? 'error' : ''}`}>
+                        {msg.answer}
+                      </div>
+                      {msg.sources && msg.sources.length > 0 && (
+                        <div className="sources-section">
+                          <div className="sources-title">
+                            📚 Sources ({msg.sources.length})
+                          </div>
+                          {msg.sources.map((source, idx) => (
+                            <span key={idx} className="source-chip">
+                              {source.metadata?.file_path || 'Unknown'}
+                              <span className="source-score">
+                                {(source.score * 100).toFixed(0)}%
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="input-area">
+          <form onSubmit={handleQuery} className="input-container">
+            <div className="input-wrapper">
+              <textarea
+                ref={questionInputRef}
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask a question about your documents..."
+                rows={1}
+                disabled={isProcessing}
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="send-btn" 
+              disabled={!question.trim() || isProcessing}
+            >
+              {isProcessing ? <span className="loading"></span> : 'Send'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
