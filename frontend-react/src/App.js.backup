@@ -17,6 +17,7 @@ function App() {
   const [expandedHistory, setExpandedHistory] = useState(null);
 
   useEffect(() => {
+    // Test connection on startup
     testConnection();
     fetchData();
     const interval = setInterval(fetchData, 30000);
@@ -164,54 +165,7 @@ function App() {
 
     setLoading(true);
     setAnswer(null);
-
-    try {
-      const res = await fetch(`${API_URL}/query`, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, top_k: 4 })
-      });
-      const data = await res.json();
-      
-      if (res.ok) {
-        console.log('✅ Query success:', data);
-        setAnswer(data);
-        setQuestion('');
-        fetchData();
-      } else {
-        console.error('❌ Query failed:', data);
-        alert(`❌ Query failed: ${data.detail || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('❌ Query error:', error);
-      alert(`❌ Query failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="app">
-      <header className="header">
-        <h1>📚 AI Document Search</h1>
-        <p>Upload documents and get intelligent answers</p>
-      </header>
-
-      <div className="stats">
-        <div className="stat-card">
-          <div className="stat-value">{stats?.total_documents ?? 0}</div>
-          <div className="stat-label">DOCUMENTS</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats?.total_queries ?? 0}</div>
-          <div className="stat-label">QUERIES</div>
-        </div>
-      </div>
-
-      <div className="main-grid">
-        <div className="card">
-          <h2>📤 Upload Documents</h2>
+s</h2>
           <form onSubmit={handleUpload}>
             <div 
               className={`upload-zone ${dragActive ? 'drag-active' : ''}`}
@@ -259,7 +213,54 @@ function App() {
             )}
             
             <button type="submit" disabled={files.length === 0 || uploading}>
-              {uploading ? `Uploading... (${uploadStatus.filter(s => s.status === 'success').length}/${files.length})` : `Upload ${files.length} File(s)`}
+              {uploading ? `Uploading... (${uploadStatus.filter(s => s.status === 'success').length}/${files.length})` : `Upload ${files.length} File(s)`
+      if (res.ok) {
+        console.log('✅ Query success:', data);
+        setAnswer(data);
+        setQuestion('');
+        fetchData();
+      } else {
+        console.error('❌ Query failed:', data);
+        alert(`❌ Query failed: ${data.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('❌ Query error:', error);
+      alert(`❌ Query failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="app">
+      <header className="header">
+        <h1>📚 AI Document Search</h1>
+        <p>Upload documents and get intelligent answers</p>
+      </header>
+
+      <div className="stats">
+        <div className="stat-card">
+          <div className="stat-value">{stats?.total_documents ?? 0}</div>
+          <div className="stat-label">DOCUMENTS</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{stats?.total_queries ?? 0}</div>
+          <div className="stat-label">QUERIES</div>
+        </div>
+      </div>
+
+      <div className="main-grid">
+        <div className="card">
+          <h2>📤 Upload Document</h2>
+          <form onSubmit={handleUpload}>
+            <input
+              type="file"
+              onChange={handleFileChange}
+              accept=".pdf,.docx,.png,.jpg,.jpeg,.mp3,.wav"
+              disabled={uploading}
+            />
+            <button type="submit" disabled={!file || uploading}>
+              {uploading ? 'Uploading...' : 'Upload'}
             </button>
           </form>
         </div>
