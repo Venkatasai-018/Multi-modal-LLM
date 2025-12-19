@@ -11,9 +11,9 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./data/uploads")
 VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", "./data/vector_db")
 LOGS_DIR = os.getenv("LOGS_DIR", "./logs")
 
-# API
-API_HOST = os.getenv("API_HOST", "0.0.0.0")
-API_PORT = int(os.getenv("API_PORT", 8000))
+# API - Hardcoded to port 8000
+API_HOST = "0.0.0.0"
+API_PORT = 8000
 
 # Model Config
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 512))

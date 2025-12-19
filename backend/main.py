@@ -150,4 +150,8 @@ async def reset_system():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host=config.API_HOST, port=config.API_PORT)
+    print("="*60)
+    print("🚀 Backend server starting on http://localhost:8000")
+    print("📚 API Documentation: http://localhost:8000/docs")
+    print("="*60)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

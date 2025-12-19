@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Hardcoded backend URL - Backend runs on port 8000
 const API_URL = 'http://localhost:8000';
 
 function App() {
@@ -14,39 +15,59 @@ function App() {
   const [expandedHistory, setExpandedHistory] = useState(null);
 
   useEffect(() => {
+    // Test connection on startup
+    testConnection();
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
+  const testConnection = async () => {
+    try {
+      const res = await fetch(`${API_URL}/stats`, { 
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (res.ok) {
+        console.log('✅ Backend connected successfully');
+      } else {
+        console.error('❌ Backend returned error:', res.status);
+      }
+    } catch (error) {
+      console.error('❌ Cannot connect to backend at', API_URL);
+      console.error('Error:', error.message);
+      alert(`Cannot connect to backend!\n\nMake sure backend is running:\ncd backend\npython main.py\n\nBackend should be at: ${API_URL}`);
+    }
+  };
+
   const fetchData = async () => {
     try {
-      console.log('Fetching data from:', API_URL);
-      
       const [statsRes, historyRes] = await Promise.all([
-        fetch(`${API_URL}/stats`),
-        fetch(`${API_URL}/history`)
+        fetch(`${API_URL}/stats`, { 
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' }
+        }),
+        fetch(`${API_URL}/history`, { 
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' }
+        })
       ]);
       
-      console.log('Stats response:', statsRes.status, statsRes.ok);
-      console.log('History response:', historyRes.status, historyRes.ok);
-      
       if (!statsRes.ok || !historyRes.ok) {
-        throw new Error('Backend not responding properly');
+        console.error('Backend error - Stats:', statsRes.status, 'History:', historyRes.status);
+        return;
       }
       
       const statsData = await statsRes.json();
       const historyData = await historyRes.json();
       
-      console.log('Stats data received:', statsData);
-      console.log('History data received:', historyData);
-      console.log('Number of history items:', historyData.history?.length);
+      console.log('📊 Stats:', statsData);
+      console.log('📜 History:', historyData.history?.length, 'items');
       
       setStats(statsData);
       setHistory(historyData.history || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      console.log('Make sure backend is running at:', API_URL);
+      console.error('❌ Fetch error:', error.message);
     }
   };
 
@@ -63,28 +84,47 @@ function App() {
     formData.append('file', file);
 
     try {
-      const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
+      const res = await fetch(`${API_URL}/upload`, { 
+        method: 'POST', 
+        mode: 'cors',
+        body: formData 
+      });
+      const data = await res.json();
+      
       if (res.ok) {
+        console.log('✅ Upload success:', data);
+        alert(`✅ ${data.message || 'File uploaded successfully!'}`);
         setFile(null);
         e.target.reset();
         fetchData();
+      } else {
+        console.error('❌ Upload failed:', data);
+        alert(`❌ Upload failed: ${data.detail || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('❌ Upload error:', error);
+      alert(`❌ Upload failed: ${error.message}`);
     } finally {
       setUploading(false);
     }
-  };
-
-  const handleQuery = async (e) => {
-    e.preventDefault();
-    if (!question.trim()) return;
-
-    setLoading(true);
-    setAnswer(null);
-
-    try {
-      const res = await fetch(`${API_URL}/query`, {
+  };mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, top_k: 4 })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        console.log('✅ Query success:', data);
+        setAnswer(data);
+        setQuestion('');
+        fetchData();
+      } else {
+        console.error('❌ Query failed:', data);
+        alert(`❌ Query failed: ${data.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('❌ Query error:', error);
+      alert(`❌ Query failed: ${error.message}`/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, top_k: 4 })
