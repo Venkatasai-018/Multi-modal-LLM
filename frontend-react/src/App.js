@@ -108,7 +108,19 @@ function App() {
     } finally {
       setUploading(false);
     }
-  };mode: 'cors',
+  };
+
+  const handleQuery = async (e) => {
+    e.preventDefault();
+    if (!question.trim()) return;
+
+    setLoading(true);
+    setAnswer(null);
+
+    try {
+      const res = await fetch(`${API_URL}/query`, {
+        method: 'POST',
+        mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, top_k: 4 })
       });
@@ -125,19 +137,7 @@ function App() {
       }
     } catch (error) {
       console.error('❌ Query error:', error);
-      alert(`❌ Query failed: ${error.message}`/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, top_k: 4 })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setAnswer(data);
-        setQuestion('');
-        fetchData();
-      }
-    } catch (error) {
-      console.error('Query error:', error);
+      alert(`❌ Query failed: ${error.message}`);
     } finally {
       setLoading(false);
     }
