@@ -264,6 +264,7 @@
     </div>
 
     <script>
+        // Hardcoded backend URL - DO NOT CHANGE
         const API_URL = 'http://localhost:8000';
         
         // Upload functionality
@@ -394,10 +395,13 @@
                 const response = await fetch(`${API_URL}/stats`);
                 const data = await response.json();
                 
-                document.getElementById('docCount').textContent = data.vector_store.total_documents;
-                document.getElementById('filesCount').textContent = data.processed_files;
+                console.log('Stats data:', data);
+                document.getElementById('docCount').textContent = data.total_documents || 0;
+                document.getElementById('filesCount').textContent = data.total_documents || 0;
             } catch (error) {
                 console.error('Error loading stats:', error);
+                document.getElementById('docCount').textContent = '0';
+                document.getElementById('filesCount').textContent = '0';
             }
         }
         
@@ -421,12 +425,12 @@
                 data.history.slice().reverse().forEach((item, i) => {
                     html += `
                         <div class="response" style="margin-bottom: 15px;">
-                            <strong>Q:</strong> ${item.query}<br>
-                            <strong>A:</strong> ${item.response.substring(0, 150)}${item.response.length > 150 ? '...' : ''}<br>
+                            <strong>Q:</strong> ${item.question || item.query}<br>
+                            <strong>A:</strong> ${(item.answer || item.response || '').substring(0, 150)}${(item.answer || item.response || '').length > 150 ? '...' : ''}<br>
                             <small style="color: #666;">
                                 ${new Date(item.timestamp).toLocaleString()} | 
-                                ${item.retrieved_documents} sources | 
-                                ${item.processing_time_seconds.toFixed(2)}s
+                                ${item.retrieved_documents || 0} sources | 
+                                ${(item.processing_time_seconds || 0).toFixed(2)}s
                             </small>
                         </div>
                     `;
@@ -438,7 +442,24 @@
             }
         }
         
+        // Test connection
+        async function testConnection() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                if (response.ok) {
+                    console.log('✅ Backend connected successfully at', API_URL);
+                } else {
+                    console.error('❌ Backend returned error:', response.status);
+                    alert('Backend is not responding properly. Make sure it\'s running on port 8000');
+                }
+            } catch (error) {
+                console.error('❌ Cannot connect to backend:', error);
+                alert(`Cannot connect to backend at ${API_URL}\n\nMake sure backend is running:\ncd backend\npython main.py`);
+            }
+        }
+        
         // Initial load
+        testConnection();
         loadStats();
         loadHistory();
         setInterval(loadStats, 30000); // Refresh stats every 30 seconds
