@@ -24,10 +24,12 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
       });
 
       const data = await res.json();
+      console.log('Query response:', data);
 
       if (res.ok) {
         const duration = (Date.now() - startTime) / 1000;
         data.processing_time = duration;
+        console.log('Setting response:', data);
         setResponse(data);
         onSuccess();
       } else {
@@ -71,7 +73,7 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
         </div>
       )}
 
-      {response && !response.error && (
+      {response && !response.error && response.answer && (
         <div className="response-container">
           <div className="answer">
             <h3>Answer</h3>

@@ -16,6 +16,7 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/stats`);
       const data = await res.json();
+      console.log('Stats fetched:', data);
       setStats(data);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -26,6 +27,7 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/history`);
       const data = await res.json();
+      console.log('History fetched:', data);
       setHistory(data.history || []);
     } catch (error) {
       console.error('Error fetching history:', error);

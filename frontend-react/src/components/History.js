@@ -6,7 +6,14 @@ const History = ({ history }) => {
   const [activeTab, setActiveTab] = useState('all');
   const [expandedIndex, setExpandedIndex] = useState(null);
 
+  console.log('History received:', history);
+
   const filterHistory = () => {
+    if (!history || !Array.isArray(history)) {
+      console.log('History is not an array:', history);
+      return [];
+    }
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
