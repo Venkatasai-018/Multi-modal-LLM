@@ -44,6 +44,8 @@
   font-weight: bold;
   color: #667eea;
   margin-bottom: 8px;
+  line-height: 1;
+  display: block;
 }
 
 .stat-label {
@@ -52,6 +54,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
+  display: block;
 }
 
 .main-grid {
@@ -219,11 +222,19 @@ button:disabled {
 .history-question {
   color: #333;
   line-height: 1.5;
+  display: flex;
+  gap: 8px;
 }
 
-.history-question strong {
+.history-question .label {
   color: #667eea;
-  margin-right: 6px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.history-question .text {
+  color: #333;
+  flex: 1;
 }
 
 .history-answer {
@@ -232,11 +243,19 @@ button:disabled {
   border-top: 2px solid #dee2e6;
   color: #555;
   line-height: 1.6;
+  display: flex;
+  gap: 8px;
 }
 
-.history-answer strong {
+.history-answer .label {
   color: #48bb78;
-  margin-right: 6px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.history-answer .text {
+  color: #555;
+  flex: 1;
 }
 
 @media (max-width: 768px) {

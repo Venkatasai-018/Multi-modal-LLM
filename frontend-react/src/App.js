@@ -95,12 +95,12 @@ function App() {
 
       <div className="stats">
         <div className="stat-card">
-          <div className="stat-value">{stats.total_documents}</div>
-          <div className="stat-label">Documents</div>
+          <div className="stat-value">{stats?.total_documents ?? 0}</div>
+          <div className="stat-label">DOCUMENTS</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.total_queries}</div>
-          <div className="stat-label">Queries</div>
+          <div className="stat-value">{stats?.total_queries ?? 0}</div>
+          <div className="stat-label">QUERIES</div>
         </div>
       </div>
 
@@ -165,11 +165,13 @@ function App() {
             {history.slice(0, 10).map((item, i) => (
               <div key={i} className="history-item" onClick={() => setExpandedHistory(expandedHistory === i ? null : i)}>
                 <div className="history-question">
-                  <strong>Q:</strong> {item.question}
+                  <span className="label">Q:</span>
+                  <span className="text">{item.question || 'No question text'}</span>
                 </div>
                 {expandedHistory === i && (
                   <div className="history-answer">
-                    <strong>A:</strong> {item.answer}
+                    <span className="label">A:</span>
+                    <span className="text">{item.answer || 'No answer text'}</span>
                   </div>
                 )}
               </div>
