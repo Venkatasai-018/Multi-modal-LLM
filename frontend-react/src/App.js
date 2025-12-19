@@ -4,6 +4,7 @@ import FileUpload from './components/FileUpload';
 import QueryInterface from './components/QueryInterface';
 import Statistics from './components/Statistics';
 import History from './components/History';
+import ReactTest from './components/ReactTest';
 
 const API_URL = 'http://localhost:8000';
 
@@ -11,6 +12,15 @@ function App() {
   const [stats, setStats] = useState({ total_documents: 0, total_queries: 0 });
   const [history, setHistory] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('Stats state updated:', stats);
+  }, [stats]);
+
+  useEffect(() => {
+    console.log('History state updated:', history);
+  }, [history]);
 
   const fetchStats = async () => {
     try {
@@ -57,6 +67,16 @@ function App() {
       </header>
 
       <div className="container">
+        {/* Debug Panel */}
+        <div style={{background: '#fff3cd', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.875rem'}}>
+          <strong>🐛 Debug Info:</strong> Stats loaded: {stats.total_documents} docs, {stats.total_queries} queries | 
+          History loaded: {history.length} items | 
+          API: {API_URL}
+        </div>
+
+        {/* React Test Component - Remove this after testing */}
+        <ReactTest />
+
         <Statistics stats={stats} />
         
         <div className="main-content">

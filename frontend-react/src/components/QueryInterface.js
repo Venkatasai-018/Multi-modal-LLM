@@ -7,6 +7,11 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
+  // Debug: Log response changes
+  React.useEffect(() => {
+    console.log('Response state updated:', response);
+  }, [response]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -30,12 +35,17 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
         const duration = (Date.now() - startTime) / 1000;
         data.processing_time = duration;
         console.log('Setting response:', data);
+        console.log('Answer exists?', !!data.answer);
+        console.log('Answer content:', data.answer);
         setResponse(data);
+        setQuery(''); // Clear query after successful response
         onSuccess();
       } else {
-        setResponse({ error: data.detail });
+        console.error('Response not OK:', res.status, data);
+        setResponse({ error: data.detail || 'Unknown error' });
       }
     } catch (error) {
+      console.error('Query failed:', error);
       setResponse({ error: error.message });
     } finally {
       setLoading(false);
@@ -73,29 +83,48 @@ const QueryInterface = ({ apiUrl, onSuccess }) => {
         </div>
       )}
 
-      {response && !response.error && response.answer && (
-        <div className="response-container">
-          <div className="answer">
-            <h3>Answer</h3>
-            <div className="answer-text">{response.answer}</div>
-            <div className="meta">
-              <span>⏱️ {response.processing_time?.toFixed(2)}s</span>
-            </div>
-          </div>
+      {/* Debug: Show response state */}
+      {response && (
+        <div style={{background: '#e6f2ff', padding: '8px', borderRadius: '4px', fontSize: '0.75rem', marginTop: '10px'}}>
+          Debug: Has response: {response ? 'Yes' : 'No'} | 
+          Has error: {response?.error ? 'Yes' : 'No'} | 
+          Has answer: {response?.answer ? 'Yes' : 'No'} | 
+          Answer length: {response?.answer?.length || 0}
+        </div>
+      )}
 
-          {response.sources && response.sources.length > 0 && (
-            <div className="sources">
-              <h3>📚 Sources ({response.sources.length})</h3>
-              {response.sources.map((source, idx) => (
-                <div key={idx} className="source-item">
-                  <div className="source-header">
-                    <span className="source-file">📄 {source.file}</span>
-                    <span className="source-score">{(source.similarity * 100).toFixed(0)}%</span>
-                  </div>
-                  <div className="source-type">{source.type}</div>
-                  <div className="source-excerpt">{source.excerpt}</div>
+      {response && !response.error && (
+        <div className="response-container">
+          {response.answer ? (
+            <>
+              <div className="answer">
+                <h3>Answer</h3>
+                <div className="answer-text">{response.answer}</div>
+                <div className="meta">
+                  <span>⏱️ {response.processing_time?.toFixed(2)}s</span>
                 </div>
-              ))}
+              </div>
+
+              {response.sources && response.sources.length > 0 && (
+                <div className="sources">
+                  <h3>📚 Sources ({response.sources.length})</h3>
+                  {response.sources.map((source, idx) => (
+                    <div key={idx} className="source-item">
+                      <div className="source-header">
+                        <span className="source-file">📄 {source.file}</span>
+                        <span className="source-score">{(source.similarity * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="source-type">{source.type}</div>
+                      <div className="source-excerpt">{source.excerpt}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{padding: '20px', background: '#fed7d7', borderRadius: '8px', marginTop: '10px'}}>
+              <strong>⚠️ Response received but no answer field found!</strong>
+              <pre style={{fontSize: '0.75rem', marginTop: '10px'}}>{JSON.stringify(response, null, 2)}</pre>
             </div>
           )}
         </div>
