@@ -492,7 +492,7 @@ function App() {
               className="file-input" 
               multiple 
               accept=".pdf,.docx,.png,.jpg,.jpeg,.mp3,.wav"
-              onChange={handleFileUpload}
+              onChange={handleFileChange}
             />
             <button className="browse-btn" onClick={() => fileInputRef.current?.click()}>
               Or click to browse
