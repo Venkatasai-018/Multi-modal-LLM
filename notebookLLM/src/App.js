@@ -1,9 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
+import Auth from './Auth';
+import Landing from './Landing';
 
 const API_URL = 'http://localhost:8000';
 
 function App() {
+  // Page state
+  const [showLanding, setShowLanding] = useState(true);
+  
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+  const [username, setUsername] = useState(null);
+  const [activities, setActivities] = useState([]);
+  
   const [stats, setStats] = useState({ total_documents: 0, total_queries: 0 });
   const [documents, setDocuments] = useState([]);
   const [history, setHistory] = useState([]);
@@ -25,9 +36,26 @@ function App() {
   const fileInputRef = useRef(null);
   const questionInputRef = useRef(null);
 
+  // Check for existing session on mount
   useEffect(() => {
+    const savedSessionId = localStorage.getItem('session_id');
+    const savedUsername = localStorage.getItem('username');
+    
+    if (savedSessionId && savedUsername) {
+      setSessionId(savedSessionId);
+      setUsername(savedUsername);
+      setIsAuthenticated(true);
+      setShowLanding(false); // Skip landing if already logged in
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
     testConnection();
     fetchData();
+    loadActivities();
+    logActivity('page_view', { page: 'dashboard' });
     
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -58,7 +86,7 @@ function App() {
     
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (chatAreaRef.current) {
@@ -75,6 +103,95 @@ function App() {
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
+  };
+
+  // Landing page handler
+  const handleGetStarted = () => {
+    setShowLanding(false);
+  };
+
+  // Auth functions
+  const handleLogin = (newSessionId, newUsername) => {
+    setSessionId(newSessionId);
+    setUsername(newUsername);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/logout`, {
+        method: 'POST',
+        headers: {
+          'X-Session-Id': sessionId
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    
+    localStorage.removeItem('session_id');
+    localStorage.removeItem('username');
+    setIsAuthenticated(false);
+    setSessionId(null);
+    setUsername(null);
+    setMessages([]);
+    setDocuments([]);
+    setShowLanding(true); // Return to landing page
+    showToast('Logged out successfully', 'info');
+  };
+
+  // API helper with authentication
+  const apiRequest = async (endpoint, options = {}) => {
+    const headers = {
+      'X-Session-Id': sessionId,
+      ...options.headers
+    };
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+      mode: 'cors'
+    });
+
+    if (response.status === 401) {
+      // Session expired
+      handleLogout();
+      throw new Error('Session expired');
+    }
+
+    return response;
+  };
+
+  // Log activity to database
+  const logActivity = async (activityType, activityData = null) => {
+    try {
+      await apiRequest('/log-activity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          activity_type: activityType,
+          activity_data: activityData
+        })
+      });
+      loadActivities();
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
+  };
+
+  // Load user activities
+  const loadActivities = async () => {
+    try {
+      const response = await apiRequest('/my-activities?limit=50');
+      if (response.ok) {
+        const data = await response.json();
+        setActivities(data.activities || []);
+      }
+    } catch (error) {
+      console.error('Error loading activities:', error);
+    }
   };
 
   const testConnection = async () => {
@@ -154,9 +271,8 @@ function App() {
       formData.append('file', file);
 
       try {
-        const res = await fetch(`${API_URL}/upload`, {
+        const res = await apiRequest('/upload', {
           method: 'POST',
-          mode: 'cors',
           body: formData
         });
 
@@ -301,9 +417,8 @@ function App() {
     setMessages(prev => [...prev, newMessage]);
 
     try {
-      const res = await fetch(`${API_URL}/query`, {
+      const res = await apiRequest('/query', {
         method: 'POST',
-        mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: currentQuestion, top_k: 4 })
       });
@@ -358,6 +473,16 @@ function App() {
     item.question.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Show landing page first
+  if (showLanding) {
+    return <Landing onGetStarted={handleGetStarted} />;
+  }
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Auth onLogin={handleLogin} />;
+  }
+
   return (
     <div className={`app-container ${theme}`}>
       {toast && (
@@ -373,13 +498,32 @@ function App() {
         <div className="sidebar-header">
           <div className="header-top">
             <h1>📚 Document Library</h1>
-            <button 
-              className="icon-btn" 
-              onClick={() => setShowSettings(!showSettings)}
-              title="Settings"
-            >
-              ⚙️
-            </button>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              <button 
+                className="icon-btn" 
+                onClick={() => setShowSettings(!showSettings)}
+                title="Settings"
+              >
+                ⚙️
+              </button>
+              <button 
+                className="icon-btn" 
+                onClick={handleLogout}
+                title="Logout"
+                style={{ fontSize: '18px' }}
+              >
+                👋
+              </button>
+            </div>
+          </div>
+          <div className="user-info" style={{ 
+            padding: '10px', 
+            background: 'rgba(102, 126, 234, 0.1)', 
+            borderRadius: '8px', 
+            marginBottom: '10px',
+            fontSize: '14px'
+          }}>
+            <strong>👤 {username}</strong>
           </div>
           <div className="stats">
             <div className="stat-item">
@@ -581,6 +725,31 @@ function App() {
                   <div className="history-question">{item.question}</div>
                   <div className="history-time">
                     {new Date(item.timestamp).toLocaleString()}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="section-header" style={{ marginTop: '24px' }}>
+            <div className="section-title">📊 Activity Log</div>
+          </div>
+          
+          <div className="activity-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {activities.length === 0 ? (
+              <div className="empty-state">No activities yet</div>
+            ) : (
+              activities.slice(0, 10).map((activity, index) => (
+                <div key={index} className="history-item" style={{ cursor: 'default' }}>
+                  <div className="history-question" style={{ fontSize: '13px' }}>
+                    {activity.activity_type === 'login' && '🔐 Login'}
+                    {activity.activity_type === 'logout' && '👋 Logout'}
+                    {activity.activity_type === 'file_upload' && `📁 Uploaded: ${activity.activity_data?.filename || 'file'}`}
+                    {activity.activity_type === 'query' && `💬 ${activity.activity_data?.question || 'Query'}`}
+                    {activity.activity_type === 'page_view' && '👁️ Page View'}
+                  </div>
+                  <div className="history-time">
+                    {new Date(activity.timestamp).toLocaleString()}
                   </div>
                 </div>
               ))

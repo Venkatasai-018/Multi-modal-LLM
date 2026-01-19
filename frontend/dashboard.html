@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Multi-modal LLM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .username {
+            font-weight: 600;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 40px;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        /* Upload Section */
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Query Section */
+        .query-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .query-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .query-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .response-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            margin-bottom: 20px;
+        }
+
+        .response-box.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Activity Log */
+        .activity-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 15px;
+            border-left: 3px solid #667eea;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .activity-type {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .activity-details {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>🤖 Multi-modal LLM Dashboard</h1>
+        </div>
+        <div class="user-info">
+            <span class="username" id="usernameDisplay">Loading...</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalActivities">0</div>
+                <div class="stat-label">Total Activities</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="queriesCount">0</div>
+                <div class="stat-label">Queries Made</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="uploadsCount">0</div>
+                <div class="stat-label">Files Uploaded</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Main Content -->
+            <div>
+                <!-- Upload Section -->
+                <div class="card">
+                    <h2>📁 Upload Document</h2>
+                    <div id="message" class="message hidden"></div>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📄</div>
+                        <p>Drag & drop files here or click to browse</p>
+                        <p style="font-size: 12px; color: #999; margin-top: 10px;">
+                            Supports: PDF, DOCX, Images, Audio
+                        </p>
+                    </div>
+                    <input type="file" id="fileInput" style="display: none;">
+                    <div id="uploadStatus" class="hidden loading"></div>
+                </div>
+
+                <!-- Query Section -->
+                <div class="card">
+                    <h2>💬 Ask a Question</h2>
+                    <div class="query-input">
+                        <input type="text" id="queryInput" placeholder="Ask anything about your uploaded documents...">
+                        <button class="btn-primary" onclick="submitQuery()">Ask</button>
+                    </div>
+                    <div class="response-box empty" id="responseBox">
+                        Your answer will appear here...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <h2>📊 Activity Log</h2>
+                <div class="activity-list" id="activityList">
+                    <div class="loading">Loading activities...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let sessionId = localStorage.getItem('session_id');
+        let username = localStorage.getItem('username');
+
+        // Check authentication
+        if (!sessionId) {
+            window.location.href = 'auth.html';
+        }
+
+        // Display username
+        document.getElementById('usernameDisplay').textContent = username || 'User';
+
+        // Helper function to make authenticated requests
+        async function apiRequest(endpoint, options = {}) {
+            const headers = {
+                'X-Session-Id': sessionId,
+                ...options.headers
+            };
+            
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                ...options,
+                headers
+            });
+
+            if (response.status === 401) {
+                // Session expired
+                localStorage.removeItem('session_id');
+                localStorage.removeItem('username');
+                window.location.href = 'auth.html';
+                throw new Error('Session expired');
+            }
+
+            return response;
+        }
+
+        // Log activity
+        async function logActivity(activityType, activityData = null) {
+            try {
+                await apiRequest('/log-activity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        activity_type: activityType,
+                        activity_data: activityData
+                    })
+                });
+                loadActivities(); // Refresh activity log
+            } catch (error) {
+                console.error('Error logging activity:', error);
+            }
+        }
+
+        // Load activities
+        async function loadActivities() {
+            try {
+                const response = await apiRequest('/my-activities?limit=50');
+                const data = await response.json();
+                
+                const activityList = document.getElementById('activityList');
+                
+                if (data.activities.length === 0) {
+                    activityList.innerHTML = '<p style="color: #999; text-align: center;">No activities yet</p>';
+                    return;
+                }
+
+                activityList.innerHTML = data.activities.map(activity => {
+                    const date = new Date(activity.timestamp);
+                    const timeStr = date.toLocaleString();
+                    
+                    let details = '';
+                    if (activity.activity_data) {
+                        if (activity.activity_type === 'file_upload') {
+                            details = `Uploaded: ${activity.activity_data.filename}`;
+                        } else if (activity.activity_type === 'query') {
+                            details = `Q: ${activity.activity_data.question}`;
+                        }
+                    }
+                    
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-type">${formatActivityType(activity.activity_type)}</div>
+                            ${details ? `<div class="activity-details">${details}</div>` : ''}
+                            <div class="activity-time">${timeStr}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Update stats
+                updateStats(data.activities);
+            } catch (error) {
+                console.error('Error loading activities:', error);
+            }
+        }
+
+        function formatActivityType(type) {
+            const icons = {
+                'login': '🔐 Login',
+                'logout': '👋 Logout',
+                'file_upload': '📁 File Upload',
+                'query': '💬 Query',
+                'page_view': '👁️ Page View'
+            };
+            return icons[type] || type;
+        }
+
+        function updateStats(activities) {
+            document.getElementById('totalActivities').textContent = activities.length;
+            
+            const queries = activities.filter(a => a.activity_type === 'query').length;
+            document.getElementById('queriesCount').textContent = queries;
+            
+            const uploads = activities.filter(a => a.activity_type === 'file_upload').length;
+            document.getElementById('uploadsCount').textContent = uploads;
+        }
+
+        // Upload file
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        async function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const uploadStatus = document.getElementById('uploadStatus');
+            const messageEl = document.getElementById('message');
+            
+            uploadStatus.textContent = `Uploading ${file.name}...`;
+            uploadStatus.classList.remove('hidden');
+            messageEl.classList.add('hidden');
+            
+            try {
+                const response = await apiRequest('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageEl.textContent = data.message;
+                    messageEl.className = 'message success';
+                    loadActivities();
+                } else {
+                    messageEl.textContent = data.detail || 'Upload failed';
+                    messageEl.className = 'message error';
+                }
+            } catch (error) {
+                messageEl.textContent = 'Error uploading file';
+                messageEl.className = 'message error';
+            }
+            
+            uploadStatus.classList.add('hidden');
+            fileInput.value = '';
+        }
+
+        // Submit query
+        async function submitQuery() {
+            const queryInput = document.getElementById('queryInput');
+            const question = queryInput.value.trim();
+            
+            if (!question) return;
+            
+            const responseBox = document.getElementById('responseBox');
+            responseBox.className = 'response-box loading';
+            responseBox.textContent = 'Thinking...';
+            
+            try {
+                const response = await apiRequest('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        top_k: 5
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    responseBox.className = 'response-box';
+                    responseBox.innerHTML = `
+                        <strong>Question:</strong> ${data.question}<br><br>
+                        <strong>Answer:</strong> ${data.answer}<br><br>
+                        <em style="color: #999;">Processing time: ${data.processing_time.toFixed(2)}s</em>
+                    `;
+                    queryInput.value = '';
+                    loadActivities();
+                } else {
+                    responseBox.className = 'response-box';
+                    responseBox.textContent = 'Error: ' + (data.detail || 'Query failed');
+                }
+            } catch (error) {
+                responseBox.className = 'response-box';
+                responseBox.textContent = 'Error processing query';
+            }
+        }
+
+        // Allow Enter key to submit query
+        document.getElementById('queryInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitQuery();
+            }
+        });
+
+        // Logout
+        async function logout() {
+            try {
+                await apiRequest('/logout', {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            localStorage.removeItem('session_id');
+            localStorage.removeItem('username');
+            window.location.href = 'auth.html';
+        }
+
+        // Log page view
+        logActivity('page_view', { page: 'dashboard' });
+
+        // Load initial data
+        loadActivities();
+    </script>
+</body>
+</html>

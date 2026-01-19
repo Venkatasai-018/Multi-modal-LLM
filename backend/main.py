@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -10,6 +10,7 @@ from agents.orchestrator import AgentOrchestrator
 from utils.vector_store import VectorStore
 from utils.logger import QueryLogger
 from utils.rag_pipeline import RAGPipeline
+from database import Database
 import config
 
 app = FastAPI(title="Multi-modal RAG System", version="1.0.0")
@@ -34,8 +35,22 @@ rag_pipeline = RAGPipeline(
     max_tokens=config.MAX_TOKENS,
     temperature=config.TEMPERATURE
 )
+db = Database()
 
 # Pydantic models
+class SignupRequest(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class ActivityLog(BaseModel):
+    activity_type: str
+    activity_data: Optional[dict] = None
+
 class QueryRequest(BaseModel):
     question: str
     top_k: Optional[int] = 5
@@ -55,10 +70,140 @@ async def root():
         "version": "1.0.0"
     }
 
+# Helper function to verify session
+def verify_session(session_id: Optional[str] = Header(None, alias="X-Session-Id")):
+    """Verify session ID from header"""
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    session = db.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Update last activity
+    db.update_session_activity(session_id)
+    return session
+
+# Authentication endpoints
+@app.post("/signup")
+async def signup(request: SignupRequest):
+    """Sign up a new user"""
+    try:
+        result = db.create_user(request.username, request.password, request.email)
+        
+        if result["success"]:
+            return {
+                "status": "success",
+                "message": "User created successfully",
+                "username": result["username"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/login")
+async def login(request: LoginRequest):
+    """Login user"""
+    try:
+        user = db.verify_user(request.username, request.password)
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid username or password")
+        
+        # Update last login
+        db.update_last_login(user["id"])
+        
+        # Create session
+        session_id = db.create_session(user["id"])
+        
+        # Log activity
+        db.log_activity(user["id"], session_id, "login", {"username": user["username"]})
+        
+        return {
+            "status": "success",
+            "message": "Login successful",
+            "session_id": session_id,
+            "username": user["username"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/logout")
+async def logout(session_id: str = Header(None, alias="X-Session-Id")):
+    """Logout user"""
+    try:
+        if session_id:
+            session = db.get_session(session_id)
+            if session:
+                db.log_activity(session["user_id"], session_id, "logout", {})
+            db.delete_session(session_id)
+        
+        return {
+            "status": "success",
+            "message": "Logged out successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/me")
+async def get_current_user(session_id: str = Header(None, alias="X-Session-Id")):
+    """Get current user information"""
+    session = verify_session(session_id)
+    return {
+        "username": session["username"],
+        "user_id": session["user_id"]
+    }
+
+@app.post("/log-activity")
+async def log_activity(activity: ActivityLog, session_id: str = Header(None, alias="X-Session-Id")):
+    """Log user activity"""
+    try:
+        session = verify_session(session_id)
+        
+        db.log_activity(
+            session["user_id"], 
+            session_id, 
+            activity.activity_type, 
+            activity.activity_data
+        )
+        
+        return {
+            "status": "success",
+            "message": "Activity logged"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/my-activities")
+async def get_my_activities(limit: int = 100, session_id: str = Header(None, alias="X-Session-Id")):
+    """Get current user's activities"""
+    try:
+        session = verify_session(session_id)
+        activities = db.get_user_activities(session["user_id"], limit)
+        
+        return {
+            "activities": activities,
+            "count": len(activities)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), session_id: str = Header(None, alias="X-Session-Id")):
     """Upload and process a file"""
     try:
+        # Verify session
+        session = verify_session(session_id)
+        
         # Save uploaded file
         file_path = os.path.join(config.UPLOAD_DIR, file.filename)
         with open(file_path, "wb") as buffer:
@@ -92,6 +237,14 @@ async def upload_file(file: UploadFile = File(...)):
         # Add to vector store
         vector_store.add_documents(chunks, metadata_list)
         
+        # Log activity
+        db.log_activity(
+            session["user_id"], 
+            session_id, 
+            "file_upload", 
+            {"filename": file.filename, "type": result["type"], "chunks": len(chunks)}
+        )
+        
         return {
             "status": "success",
             "filename": file.filename,
@@ -99,16 +252,31 @@ async def upload_file(file: UploadFile = File(...)):
             "chunks_created": len(chunks),
             "message": f"✅ Successfully processed {file.filename} ({len(chunks)} chunks)"
         }
-    
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/query", response_model=QueryResponse)
-async def query_system(request: QueryRequest):
+async def query_system(request: QueryRequest, session_id: str = Header(None, alias="X-Session-Id")):
     """Query the RAG system"""
     try:
+        # Verify session
+        session = verify_session(session_id)
+        
         result = rag_pipeline.query(request.question, top_k=request.top_k)
+        
+        # Log activity
+        db.log_activity(
+            session["user_id"], 
+            session_id, 
+            "query", 
+            {"question": request.question, "answer": result["answer"][:200]}
+        )
+        
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
